@@ -1,4 +1,6 @@
 import {addData, getAllData, getDataByField, updateCollectionData, deleteCollectionData} from '@/database/firebaseService';
+import { collection,  query,  orderBy } from 'firebase/firestore'
+import { db } from '~/database'
 
 const collectionName = 'users'
 

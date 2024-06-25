@@ -1,8 +1,11 @@
 import {addData, getAllData, getDataByField, getDataArrByField, updateCollectionData, deleteCollectionData, getDataById} from '@/database/firebaseService';
 import  {updateRoom} from '@/services/roomService';
+import { collection,  query,  orderBy, arrayRemove, arrayUnion } from 'firebase/firestore'
+import { db } from '~/database'
 
 const collectionName = 'messages'
 const roomCollectionName = 'rooms'
+const MESSAGE_REACTIONS_FIELD = 'reactions'
 
 export const addMessage = async (item) => {
   return await addData(item, collectionName);
@@ -42,4 +45,21 @@ export const updateLastRoomMessage = async(message) => {
     timestamp: message.timestamp
   }
   return await updateRoom(room.id, room);
+}
+
+export const updateMessageReactions = async(
+	message,
+	currentUserId,
+	reactionUnicode,
+	action
+) => {
+	const arrayUpdate =
+  action === 'add' ? arrayUnion(currentUserId) : arrayRemove(currentUserId)
+
+  const data = {
+		[`${MESSAGE_REACTIONS_FIELD}.${reactionUnicode}`]: arrayUpdate
+	}
+  
+  return await updateCollectionData(message.id, data, collectionName)
+
 }

@@ -10,7 +10,7 @@ definePageMeta({
     middleware: ["auth"],
 });
 useHead({
-  title: "Home",
+  title: "Chat App",
 });
 </script>
 

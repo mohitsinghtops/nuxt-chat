@@ -49,6 +49,11 @@ export const listenUploadImageProgress = (
 	error,
 	success
 ) => {
+	// check for already stored on firebase or not
+	if(file?.localUrl?.includes('firebasestorage') || file?.url?.includes('firebasestorage')) {
+		return file?.url || file?.localUrl;
+	}
+
 	const uploadTask = uploadFileTask(currentUserId, messageId, file, type)
 
 	uploadTask.on(
