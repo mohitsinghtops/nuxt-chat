@@ -57,8 +57,10 @@ export const updateMessageReactions = async(
   action === 'add' ? arrayUnion(currentUserId) : arrayRemove(currentUserId)
 
   const data = {
-		[`${MESSAGE_REACTIONS_FIELD}.${reactionUnicode}`]: arrayUpdate
+    [`${MESSAGE_REACTIONS_FIELD}.${reactionUnicode}`]: arrayUpdate
 	}
+  console.log(message)
+  console.log(data)
   
   return await updateCollectionData(message.id, data, collectionName)
 

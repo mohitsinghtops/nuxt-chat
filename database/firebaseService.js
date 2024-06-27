@@ -11,12 +11,11 @@ import {
     query,
     where,
     serverTimestamp,
-    orderBy
+    orderBy,
 } from 'firebase/firestore'
-import { orderByValue } from 'firebase/database'
 
 export const addData = async (item, collectionName) => {
-    item.createdAt = new Date()
+    item.createdAt = serverTimestamp()
     const docRef = await addDoc(collection(db, collectionName), item)
     return docRef
 }
@@ -53,13 +52,12 @@ export const getDataArrByField = async (field, value, collectionName, order = 'a
 
 export const updateCollectionData = async (id, item, collectionName) => {
     const docRef = doc(db, collectionName, id)
-    item.updatedAt = new Date()
+    item.updatedAt = serverTimestamp()
     return await updateDoc(docRef, item)
 }
 
 export const deleteCollectionData = async (id, collectionName) => {
     const docRef = doc(db, collectionName, id)
-    item.deletedAt = new Date()
     return await deleteDoc(docRef)
 }
 

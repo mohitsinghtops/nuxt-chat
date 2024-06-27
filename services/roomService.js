@@ -1,31 +1,48 @@
-import {addData, getAllData, getDataByField, getDataArrByField, updateCollectionData, deleteCollectionData} from '@/database/firebaseService';
-import { collection,  query,  orderBy } from 'firebase/firestore'
+import { addData, getAllData, getDataByField, getDataArrByField, updateCollectionData, deleteCollectionData } from '@/database/firebaseService';
+import { collection, query, orderBy } from 'firebase/firestore'
 import { db } from '~/database'
 
 const collectionName = 'rooms'
 
 export const addRoom = async (item) => {
-  return await addData(item, collectionName);
+    return await addData(item, collectionName);
 }
 
 export const getRooms = async () => {
-  return await getAllData(collectionName)
+    return await getAllData(collectionName)
+}
+
+export const getRoomWithRoomId = async (roomId) => {
+    return await getDataByField('roomId', roomId, collectionName)
+}
+
+export const getUserRooms = async (userId) => {
+    let userRooms = [];
+    const allRooms = await getAllData(collectionName);
+
+    allRooms.forEach((room) => {
+        const filteredRooms = room.users.filter((user) => user._id == userId);
+        if (filteredRooms?.length) {
+            userRooms.push(room);
+        }
+    });
+    
+    return userRooms;
 }
 
 export const updateRoom = async (id, item) => {
-  return await updateCollectionData(id, item, collectionName)
+    return await updateCollectionData(id, item, collectionName)
 }
 
 export const deleteRoom = async (id) => {
-  return await deleteCollectionData(id, collectionName)
+    return await deleteCollectionData(id, collectionName)
 }
 
 export const deleteRoomWithAllMessages = async (id, roomId) => {
-  await deleteCollectionData(id, collectionName)
-  const messages = await getDataArrByField('roomId', roomId, 'messages');
-  console.log(messages)
-  messages.forEach((message) => {
-    deleteCollectionData(message.id, 'messages')
-  })
-  
+    await deleteCollectionData(id, collectionName)
+    const messages = await getDataArrByField('roomId', roomId, 'messages');
+    messages.forEach((message) => {
+        deleteCollectionData(message.id, 'messages')
+    })
+
 }

@@ -1,9 +1,10 @@
 <template>
     <div>
-        <div class="loader min-h-screen flex items-center justify-center" v-if="!dataLoaded">
+        <div class="fixed top-0 left-0 w-full loader min-h-screen flex items-center justify-center z-50 bg-grayPrimary"
+            v-if="!dataLoaded">
             <loading-component :loading-text="false"></loading-component>
         </div>
-        <vue-advanced-chat v-if="rooms.length > 0" height="calc(100vh - 10px)" :theme="'dark'"
+        <vue-advanced-chat ref="chatRef" height="calc(100vh - 10px)" :theme="'dark'"
             :current-user-id="currentUserId" :rooms="rooms.length > 0 ? JSON.stringify(rooms) : []"
             :rooms-loaded="roomsLoaded" :menu-actions="JSON.stringify(roomActions)"
             :messages="messages.length > 0 ? JSON.stringify(messages) : []" :messages-loaded="messagesLoaded"
@@ -13,10 +14,16 @@
             @room-info="roomInfo($event.detail[0])" @menu-action-handler="menuActionHandler($event.detail[0])"
             @message-selection-action-handler="
                 messageSelectionActionHandler($event.detail[0])
-                " @send-message-reaction="sendMessageReaction($event.detail[0])" @edit-message="editMessage($event.detail[0])" @delete-message="deleteMessage($event.detail[0])" @open-file="openFile($event.detail[0])" 
-            @add-room="addNewRoom" />
+                " @send-message-reaction="sendMessageReaction($event.detail[0])"
+            @edit-message="editMessage($event.detail[0])" @delete-message="deleteMessage($event.detail[0])"
+            @open-file="openFile($event.detail[0])" @add-room="addNewRoom" />
 
         <create-room-modal v-if="modalType == 'room'" @create-room="handleRoomCreate" :total-rooms="rooms.length" />
+
+        <room-detail-modal v-if="showRoomModal" :room-id="selectedRoomId" :is-show-modal="showRoomModal"
+            @handleRoomDetail="handleRoomDetail"></room-detail-modal>
+
+        <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId" @add-room-user="handleAddRemoveUser"></add-remove-room-user>
     </div>
 </template>
 
@@ -24,6 +31,7 @@
 import { register } from "vue-advanced-chat";
 import {
     getRooms,
+    getUserRooms,
     deleteRoom,
     deleteRoomWithAllMessages,
 } from "~/services/roomService.js";
@@ -37,20 +45,24 @@ import {
     getMessageById,
     updateMessageReactions
 } from "~/services/messageService.js";
-import { generateRandomId, generateRandomDigit } from "~/helpers/common.js";
+import { generateRandomId, generateRandomDigit, formattedFiles } from "~/helpers/common.js";
 import { useUserStore } from "~/store/user";
 
 register();
 
 const userStore = useUserStore();
 const modalType = ref("");
+const chatRef = ref(null);
+const showRoomModal = ref(false);
 const showRoomInfo = ref(false);
 const roomDetails = ref({});
+const addRemoveType = ref("")
 const roomsLoaded = ref(false);
-const roomId = ref("1");
+const selectedRoomId = ref("");
 const messagesLoaded = ref(false);
 const currentUserId = ref("");
 const dataLoaded = ref(true);
+const showAddUserModal = ref(false);
 const messageSelectionActions = ref([
     {
         name: "deleteMessages",
@@ -60,17 +72,21 @@ const messageSelectionActions = ref([
 const rooms = ref([]);
 const messages = ref([]);
 const roomActions = ref([
-    // {
-    //     name: "addUser",
-    //     title: "Add User",
-    // },
-    // {
-    //     name: "removeUser",
-    //     title: "Remove User",
-    // },
+    {
+        name: "addUser",
+        title: "Add User",
+    },
+    {
+        name: "removeUser",
+        title: "Remove User",
+    },
     {
         name: "deleteRoom",
         title: "Delete Room",
+    },
+    {
+        name: "logOut",
+        title: "Log Out",
     },
 ]);
 const messageActions = ref([
@@ -91,6 +107,7 @@ const messageActions = ref([
     {
         name: "selectMessages",
         title: "Select",
+        onlyMe: true,
     },
 ]);
 
@@ -103,10 +120,10 @@ const screenHeight = computed(() => {
     return window.innerHeight + "px";
 });
 
-const fetchAllRooms = (type = "") => {
+const fetchAllRooms = async (type = "") => {
     dataLoaded.value = type != "mount" ? true : false;
     roomsLoaded.value = false;
-    getRooms()
+    await getUserRooms(currentUserId.value)
         .then((res) => {
             rooms.value = res;
             if (res.length < 1) {
@@ -150,6 +167,7 @@ const sendMessage = async ({
 
     const finalMessageObj = {
         _id: messId,
+        avatar: 'https://img.icons8.com/bubbles/50/user.png',
         content: content ?? "",
         // senderId        : '2',
         senderId: currentUserId.value,
@@ -184,12 +202,8 @@ const sendMessage = async ({
         }
     }
 
-    // console.log('finalMessageObj', finalMessageObj);
     const { id } = await addMessage(finalMessageObj);
     finalMessageObj.id = id;
-    // if (!files) {
-    //     messages.value = [...messages.value, finalMessageObj];
-    // }
     messages.value = [...messages.value, finalMessageObj];
 
     if (files) {
@@ -208,7 +222,7 @@ const editMessage = async ({ roomId, messageId, newContent, files, replyMessage,
 
     await updateMessage(message.id, message);
     messages.value.forEach((item) => {
-        if(item.id == message.id) {
+        if (item.id == message.id) {
             item.content = newContent
         }
     })
@@ -221,22 +235,30 @@ const editMessage = async ({ roomId, messageId, newContent, files, replyMessage,
 }
 
 const deleteMessage = async ({ roomId, message }) => {
-    message.deleted = new Date()
 
-    await updateMessage(message.id, message);
-    messages.value.forEach((item) => {
-        if(item.id == message.id) {
-            item.deleted = new Date()
+    await useConfirmationToast('warning', 'You won\'t be able to revert this!')
+    .then(async(result) => {
+        if(result.isConfirmed) {
+            const data = {
+                deleted: new Date()
+            }
+        
+            await updateMessage(message.id, data);
+            messages.value.forEach((item) => {
+                if (item.id == message.id) {
+                    item.deleted = new Date()
+                }
+            })
+        
+            const { files } = message
+        
+            if (files) {
+                files.forEach(file => {
+                    deleteFile(currentUserId.value, message.id, file)
+                })
+            }
         }
     })
-
-    const { files } = message
-
-    if (files) {
-        files.forEach(file => {
-            deleteFile(currentUserId.value, message.id, file)
-        })
-    }
 }
 
 const uploadFile = async ({ file, messageId, roomId }) => {
@@ -259,20 +281,15 @@ const uploadFile = async ({ file, messageId, roomId }) => {
             },
             async (url) => {
                 const message = messages.value.find((message) => message.id === messageId);
-
                 message.files.forEach((f) => {
-                    f.url = url;
-                    f.preview = url;
+                    if (f.url == file.localUrl) {
+                        f.url = url;
+                        f.preview = url;
+                    }
                 });
 
                 await updateMessage(messageId, message);
                 await updateLastRoomMessage(message);
-                // const res = await getRoomMessages(roomId);
-
-                // const progressFile = message.files.find((file) => file.url === url);
-                // delete progressFile.progress;
-                // messages.value = res;
-
                 resolve(true);
             }
         );
@@ -288,47 +305,36 @@ const updateFileProgress = (messageId, fileUrl, progress) => {
     messages.value = [...messages.value];
 };
 
-const formattedFiles = (files) => {
-    const formattedFiles = [];
-
-    files.forEach((file) => {
-        const messageFile = {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            extension: file.extension || file.type,
-            url: file.url || file.localUrl,
-            preview: file.url || file.localUrl,
-        };
-
-        if (file.audio) {
-            messageFile.audio = true;
-            messageFile.duration = file.duration;
-        }
-
-        formattedFiles.push(messageFile);
-    });
-
-    return formattedFiles;
-};
-
 const roomInfo = (room) => {
-    showRoomInfo.value = true;
-    roomDetails.value = room;
-    alert("Room Details: " + JSON.stringify(room));
+    selectedRoomId.value = room.roomId
+    showRoomModal.value = true;
+    modalType.value = ''
 };
 
 const menuActionHandler = async (data) => {
     const actionName = data.action.name;
     const roomId = data.roomId;
+    selectedRoomId.value = roomId
 
     switch (actionName) {
-        case "deleteRoom":
-            deleteCurrentRoom(roomId);
-            break;
         case "addUser":
+            addRemoveType.value = "add"
+            showAddUserModal.value = true
             break;
         case "removeUser":
+            addRemoveType.value = "remove"
+            showAddUserModal.value = true
+            break;
+        case "deleteRoom":
+            await useConfirmationToast('warning', 'You won\'t be able to revert this!')
+            .then((result) => {
+                if(result.isConfirmed) {
+                    deleteCurrentRoom(roomId);
+                }
+            })
+            break;
+        case "logOut":
+            userLogout();
             break;
         default:
             break;
@@ -336,23 +342,49 @@ const menuActionHandler = async (data) => {
 };
 
 const deleteCurrentRoom = async (roomId) => {
-    if(rooms.value.length > 0) { 
+    if (rooms.value.length > 0) {
         roomsLoaded.value = false;
         const room = rooms.value.find((room) => room.roomId == roomId);
         await deleteRoomWithAllMessages(room.id, roomId);
-        fetchAllRooms();
+        await fetchAllRooms();
     }
 };
 
+const userLogout = () => {
+    const userId = useCookie('userId')
+    userId.value = null
+    const userEmail = useCookie('email')
+    userEmail.value = null;
+
+    localStorage.removeItem('userId')
+
+    userStore.setIsLoggedIn(false);
+    userStore.setUserData(null);
+
+    navigateTo('/sign-in')
+};
+
+const handleAddRemoveUser = async (value) => {
+    showAddUserModal.value = false
+    selectedRoomId.value = ''
+    if (value) {
+        await fetchAllRooms();
+    }
+};
+
+const handleRemoveUser = async (roomId) => {
+    await fetchAllRooms();
+}
+
 const messageSelectionActionHandler = ({ roomId, action, messages }) => {
-    if(action.name == "deleteMessages") {
+    if (action.name == "deleteMessages") {
         messages.forEach(message => {
             deleteMessage({ roomId, message })
         })
     }
 };
 
-const sendMessageReaction = async({ roomId, messageId, reaction, remove }) => {
+const sendMessageReaction = async ({ roomId, messageId, reaction, remove }) => {
     const message = await getMessage('_id', messageId);
     await updateMessageReactions(message, currentUserId.value, reaction.unicode, remove ? 'remove' : 'add');
 
@@ -362,6 +394,7 @@ const sendMessageReaction = async({ roomId, messageId, reaction, remove }) => {
 
 const addNewRoom = () => {
     modalType.value = "room";
+    showRoomModal.value = false;
 };
 
 const handleRoomCreate = (data) => {
@@ -371,7 +404,7 @@ const handleRoomCreate = (data) => {
     }
 };
 
-const openFile = async({ message, file }) => {
+const openFile = async ({ message, file }) => {
     // const response = await fetch(file.file.url);
     // const blob = await response.blob();
     const link = document.createElement('a');
@@ -383,5 +416,13 @@ const openFile = async({ message, file }) => {
     document.body.removeChild(link);
 }
 
+const handleRoomDetail = (value) => {
+    showRoomModal.value = false;
+    selectedRoomId.value = ""
+    modalType.value = ''
+    if (value) {
+        fetchAllRooms();
+    }
+}
 
 </script>

@@ -1,7 +1,6 @@
 <template>
     <div>
-        <div id="modal" tabindex="-1" aria-hidden="true"
-            class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-grayPrimary/90">
+        <div class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-grayPrimary/90">
             <div class="relative p-4 w-full max-w-md max-h-full">
                 <!-- Modal content -->
                 <div class="relative rounded-lg shadow bg-grayPrimary border border-gray-50/10">
@@ -33,9 +32,14 @@
                             </div>
 
                             <button type="submit"
-                                class="w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                class="w-auto text-white bg-blueLight hover:bg-blueDark focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                                 <loading-component v-if="loading"></loading-component>
                                 <span v-else>Submit</span>
+                            </button>
+
+                            <button type="button"
+                                class="w-auto text-white bg-blueDark hover:bg-blueLight focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center ml-4" @click.prevent="userLogout" v-if="totalRooms == 0">
+                                <span>Logout</span>
                             </button>
                         </form>
                     </div>
@@ -46,8 +50,6 @@
 </template>
 
 <script setup>
-import { reactive, ref, defineProps, defineEmits } from 'vue'
-import LoadingComponent from '~/components/LoadingComponent'
 import { addRoom } from '~/services/roomService.js'
 import { generateRandomId, generateRandomDigit } from '~/helpers/common.js'
 import { useUserStore } from "~/store/user";
@@ -62,11 +64,12 @@ const defaultRoomObject = ref(
     {
         roomId: '1',
         roomName: 'My Room 1',
-        avatar: 'https://img.icons8.com/bubbles/50/user.png',
+        avatar: 'https://img.icons8.com/bubbles/50/group.png',
         users: [
             {
                 _id: '1',
-                username: 'XYZ'
+                username: 'XYZ',
+                email: 'test@example.com'
             }
         ],
         lastMessage: {
@@ -92,12 +95,15 @@ const createRoom = () => {
     defaultRoomObject.value.roomName            = formData.roomName;
     defaultRoomObject.value.users[0]._id        = userStore.getUserData.userId;
     defaultRoomObject.value.users[0].username   = userStore.getUserData.name;
+    defaultRoomObject.value.users[0].email      = userStore.getUserData.email;
 
     addRoom(defaultRoomObject.value)
     .then((res) => {
         handleCloseModal(true);
+        useToast('success', 'Room created successfully')
     }).catch((err) => {
         console.log('err: ', err)
+        useToast('error', err)
     }).finally(() => {
         loading.value = true;
     })
@@ -106,4 +112,19 @@ const createRoom = () => {
 const handleCloseModal = (value) => {
     emit('create-room', value)
 }
+
+
+const userLogout = () => {
+    const userId = useCookie('userId')
+    userId.value = null
+    const userEmail = useCookie('email')
+    userEmail.value = null;
+
+    localStorage.removeItem('userId')
+
+    userStore.setIsLoggedIn(false);
+    userStore.setUserData(null);
+
+    navigateTo('/sign-in')
+};
 </script>
