@@ -59,8 +59,6 @@ export const updateMessageReactions = async(
   const data = {
     [`${MESSAGE_REACTIONS_FIELD}.${reactionUnicode}`]: arrayUpdate
 	}
-  console.log(message)
-  console.log(data)
   
   return await updateCollectionData(message.id, data, collectionName)
 

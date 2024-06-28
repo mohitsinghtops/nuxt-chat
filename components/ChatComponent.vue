@@ -48,6 +48,9 @@ import {
 import { generateRandomId, generateRandomDigit, formattedFiles } from "~/helpers/common.js";
 import { useUserStore } from "~/store/user";
 
+import { collection,  query,  orderBy, onSnapshot, where } from 'firebase/firestore'
+import { db } from '~/database'
+
 register();
 
 const userStore = useUserStore();
@@ -142,17 +145,32 @@ const fetchAllRooms = async (type = "") => {
 const fetchMessages = async ({ room, options = {} }) => {
     messagesLoaded.value = false;
     messages.value = [];
-    const res = await getRoomMessages(room.roomId);
+    // const res = await getRoomMessages(room.roomId);
+
+    // setTimeout(() => {
+    //     if (res) {
+    //         messages.value = res;
+    //         messagesLoaded.value = true;
+    //     } else {
+    //         messagesLoaded.value = true;
+    //     }
+    //     messagesLoaded.value = true;
+    // }, 1000);
+
+    // Reference to Firestore collection
+    const messagesCollection = collection(db, 'messages');
+    const messagesQuery = query(messagesCollection, where('roomId', '==', room.roomId), orderBy('createdAt'));
 
     setTimeout(() => {
-        if (res) {
-            messages.value = res;
-            messagesLoaded.value = true;
-        } else {
-            messagesLoaded.value = true;
-        }
+        onSnapshot(messagesQuery, (snapshot) => {
+            messages.value = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        });
         messagesLoaded.value = true;
     }, 1000);
+
 };
 
 const sendMessage = async ({
@@ -204,7 +222,7 @@ const sendMessage = async ({
 
     const { id } = await addMessage(finalMessageObj);
     finalMessageObj.id = id;
-    messages.value = [...messages.value, finalMessageObj];
+    // messages.value = [...messages.value, finalMessageObj];
 
     if (files) {
         for (let index = 0; index < files.length; index++) {
