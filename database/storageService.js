@@ -10,6 +10,7 @@ import {
 
 const MESSAGES_PATH = 'files/messages'
 const ROOM_PATH = 'files/rooms'
+const USER_PATH = 'files/users'
 
 const fileRef = (currentUserId, messageId, fileName) => {
 	return ref(storage, `${MESSAGES_PATH}/${currentUserId}/${messageId}/${fileName}`)
@@ -17,6 +18,10 @@ const fileRef = (currentUserId, messageId, fileName) => {
 
 const roomFileRef = (currentUserId, roomId, fileName) => {
 	return ref(storage, `${ROOM_PATH}/${currentUserId}/${roomId}/${fileName}`)
+}
+
+const userFileRef = (currentUserId, fileName) => {
+	return ref(storage, `${ROOM_PATH}/${currentUserId}/${fileName}`)
 }
 
 export const deleteFile = (currentUserId, messageId, file) => {
@@ -82,6 +87,20 @@ export const listenUploadImageProgress = (
 
 export const uploadRoomFile = async(currentUserId, roomId, file) => {
 	const storageRef = roomFileRef(currentUserId, roomId, file.name);
+	
+	// 'file' comes from the Blob or File API
+	const result = await uploadBytes(storageRef, file)
+
+	if(result){
+		return await getFileDownloadUrl(result.ref);
+	} else {
+		return null;
+	}
+
+}
+
+export const uploadUserProfile = async(currentUserId, file) => {
+	const storageRef = userFileRef(currentUserId, file.name);
 	
 	// 'file' comes from the Blob or File API
 	const result = await uploadBytes(storageRef, file)

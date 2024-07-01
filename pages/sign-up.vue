@@ -100,10 +100,12 @@ const handleSubmit = async() => {
 
         const res = await addUser(formData)
         if(res) {
+            useToast('success', 'Sign up successsfully')
             navigateTo('/sign-in')
         }
 
     } catch (err) {
+        useToast('error', err)
         console.log('err: ', err)
     } finally {
         loading.value = false;

@@ -11,7 +11,7 @@ export default (
         title: title,
         showConfirmButton: true,
         showCancelButton: true,
-        confirmButtonText: "Yes, delete",
+        confirmButtonText: "Yes",
         background: "#131415",
         color: "#fff",
         confirmButtonColor: '#ff0000',

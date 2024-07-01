@@ -3,7 +3,7 @@
         <loading-component v-if="dataLoading" class="h-[calc(100%-1rem)]"></loading-component>
         <template v-else>
             <div class="header flex justify-between">
-                <h3 class="text-xl font-semibold text-white">Room Details</h3>
+                <h3 class="text-xl font-semibold text-white">Profile Details</h3>
                 <button type="button"
                     class="end-2.5 text-gray-400 bg-transparent rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
                     data-modal-hide="authentication-modal"
@@ -30,21 +30,43 @@
                         </div>
                     </div>
                 </div>
-    
-                <div class="form-group flex justify-between items-center my-5">
-                    <input type="text" class="text-white border border-gray-600 py-2 px-3 w-full bg-transparent rounded rounded-tr-none rounded-br-none focus:ring-0 focus:border-gray-600" v-model="formData.roomName">
-                    <button class="bg-blueLight text-white rounded py-2 px-3 border border-blueLight rounded-tl-none rounded-bl-none hover:bg-blueDark hover:border-blueDark" @click="updateRoomDetails">
+                
+                <form @submit.prevent="updateProfileDetails">
+                    <div class="form-group my-5">
+                        <label for="name" class="block mb-2 text-sm font-medium text-white"
+                            >Your Name</label
+                        >
+                        <input
+                            v-model.trim="formData.name"
+                            type="text"
+                            id="name"
+                            class="text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-grayPrimary border-gray-50/10 placeholder-gray-400"
+                            placeholder="Enter Name"
+                            required
+                        />
+                    </div>
+
+                    <div class="mb-5">
+                        <label for="email" class="block mb-2 text-sm font-medium text-white"
+                            >Your Email</label
+                        >
+                        <input
+                            disabled
+                            v-model.trim="formData.email"
+                            type="email"
+                            id="email"
+                            class="text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 border-gray-50/10 placeholder-gray-400 bg-black cursor-not-allowed"
+                            placeholder="Enter Email"
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" class="bg-blueLight text-white rounded py-2 px-6 border border-blueLight hover:bg-blueDark hover:border-blueDark" @click.prevent="updateProfileDetails">
                         <loading-component v-if="loading"></loading-component>
                         <span v-else>Update</span>
                     </button>
-                </div>
+                </form>
     
-                <div class="users mt-3">
-                    <h4 class="text-white font-bold mb-2">Users: </h4>
-                    <div class="user mb-4" v-for="user in formData.users" :key="formData.id">
-                        <p class="text-gray-300 text-sm mb-1">{{ user.email }} <span>{{ user._id == currentUserId ? '(You)' : '' }}</span></p>
-                    </div>
-                </div>
             </div>
         </template>
     </div>
@@ -52,33 +74,33 @@
 
 <script setup>
 
-    import { uploadRoomFile } from "~/database/storageService";
-    import { updateRoom, getRoomWithRoomId } from "~/services/roomService";
+    import { uploadUserProfile } from "~/database/storageService";
+    import { getUserByField, updateUser } from "~/services/userService";
+    import { useUserStore } from "~/store/user";
+
 
     const props = defineProps({
         isShowModal: {
             type: Boolean,
             default: false
         },
-        roomId: {
-            type: Number,
-            default: ""
-        }
     })
 
-    const emit = defineEmits(['handle-room-detail'])
+    const emit = defineEmits(['handle-profile-detail'])
 
     const showModal = ref(false);
-    const formData = ref(false);
+    const formData = ref({});
     const dataLoading = ref(false);
     const loading = ref(false);
     const currentUserId = ref('');
     const roomInputRef = ref(null);
     const selectedFile = ref(null);
+    const userStore = useUserStore();
+
 
     onMounted(() => {
         currentUserId.value = localStorage.getItem('userId');
-        getRoomDetail();
+        getUserDetail();
     })
 
     watch(
@@ -93,44 +115,51 @@
         {deep: true, immediate: true}
     )
 
-    const getRoomDetail = async() => {
+    const getUserDetail = async() => {
         dataLoading.value = true;
-        const room = await getRoomWithRoomId(props.roomId);
-        formData.value = room;
+        const email = useCookie('email')
+        const user = await getUserByField('email', email.value);
+        formData.value = user;
         dataLoading.value = false;
     }
 
     const handleCloseModal = () => {
-        emit('handle-room-detail', false)
+        emit('handle-profile-detail', false)
         showModal.value = false;
     }
 
-    const updateRoomDetails = async() => {
+    const updateProfileDetails = async() => {
         loading.value = true
         if(selectedFile.value) {
-            const url = await uploadRoomFile(currentUserId.value, formData.value.id, selectedFile.value)
+            const url = await uploadUserProfile(currentUserId.value, selectedFile.value)
     
-            await updateRoom(formData.value.id, {
-                roomName: formData.value.roomName,
+            await updateUser(formData.value.id, {
+                name: formData.value.name,
                 avatar: url
             });
     
             formData.value.avatar = url
-
             selectedFile.value = null;
             loading.value = false;
-            useToast('success', 'Room details updated successfully')
-            emit('handle-room-detail', true)
+            useToast('success', 'User details updated successfully')
+            // emit('handle-profile-detail', true)
         } else {
-            await updateRoom(formData.value.id, {
-                roomName: formData.value.roomName,
+            await updateUser(formData.value.id, {
+                name: formData.value.name,
             });
             
             selectedFile.value = null;
             loading.value = false
-            useToast('success', 'Room details updated successfully')
-            emit('handle-room-detail', true)
+            useToast('success', 'User details updated successfully')
+            // emit('handle-profile-detail', true)
         }
+
+        setTimeout(async() => {
+            const email = useCookie('email')
+            const user = await getUserByField('email', email.value);
+            formData.value = user;
+            userStore.setUserData(user)
+        }, 1000)
     }
 
     const handleCameraClick = () => {

@@ -88,13 +88,16 @@ const handleSubmit = async() => {
 
             error.value = null
             loading.value = false
+            useToast('success', 'Sign in successsfully')
             navigateTo('/')
         } else {
             error.value = 'User not found'
             loading.value = false
+            useToast('error', 'User not found')
         }
 
     } catch (err) {
+        useToast('error', err)
         console.log('err: ', err)
     } finally {
         loading.value = false;

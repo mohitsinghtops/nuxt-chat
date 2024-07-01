@@ -97,7 +97,7 @@
 </template>
 
 <script setup>
-    import { getUserByField } from "~/services/userService.js";
+    import { getUserByField, getUsers, addUser } from "~/services/userService.js";
     import { getRoomWithRoomId, updateRoom } from "~/services/roomService.js";
 
     const props = defineProps({
@@ -142,16 +142,36 @@
         const user = await getUserByField('email', formData.email);
 
         if(!user) {
-            error.value = 'User not found with selected email'
-            loading.value = false
-            useToast('error', 'User not found with selected email')
-            return;
+            // error.value = 'User not found with selected email'
+            // loading.value = false
+            // useToast('error', 'User not found with selected email')
+            useConfirmationToast('warning', 'Do you want to create a new user with selected email?')
+            .then(async(result) => {
+                if(result.isConfirmed) {
+                    const users = await getUsers();
+                    const userData = {
+                        name: '',
+                        email: formData.email,
+                        name: formData.email.split('@')[0],
+                        userId: users.length + 1,
+                        avatar: '',
+                    }
+                    const res = await addUser(userData)
+                    if(res) {
+                        addUserData(userData)
+                    }
+                }
+            }).finally(() => {
+                loading.value = false
+                error.value = '';
+            })
+        } else {
+            addUserData(user);
         }
 
-        addUserData();
     };
 
-    const addUserData = async() => {
+    const addUserData = async(user) => {
         const userWithEmail = selectedRoom.value.users.find((roomUser) => roomUser._id == user.userId);
 
         if(userWithEmail) {
@@ -165,6 +185,7 @@
 
         allRoomUsers.push({
             _id: user.userId,
+            email: user.email,
             username: user.name,
         })
 
@@ -183,22 +204,29 @@
 
     const handleRemoveUser = async() => {
         if(formData.selectedUsers.length) {
+
             loading.value = true
-            const allRoomUsers = selectedRoom.value.users.filter((user) => {
-                return !formData.selectedUsers.includes(user._id)
+            useConfirmationToast('warning', 'Do you want to remove the seelcted users?')
+            .then(async(result) => {
+                if(result.isConfirmed) {
+                    const allRoomUsers = selectedRoom.value.users.filter((user) => {
+                        return !formData.selectedUsers.includes(user._id)
+                    })
+            
+                    let data = {
+                        users: allRoomUsers
+                    }
+            
+                    await updateRoom(selectedRoom.value.id, data);
+                    formData.selectedUsers = []
+            
+                    useToast('success', 'Users removed Successfully')
+                    emit('add-room-user', true)
+                }
+            }).finally(() => {
+                loading.value = false
+                error.value = '';
             })
-    
-            let data = {
-                users: allRoomUsers
-            }
-    
-            await updateRoom(selectedRoom.value.id, data);
-            formData.selectedUsers = []
-    
-            loading.value = false
-            error.value = '';
-            useToast('success', 'Users removed Successfully')
-            emit('add-room-user', true)
         } else {
             useToast('error', 'No users found to remove')
         }

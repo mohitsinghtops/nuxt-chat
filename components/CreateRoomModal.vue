@@ -68,12 +68,11 @@ const defaultRoomObject = ref(
         users: [
             {
                 _id: '1',
-                username: 'XYZ',
                 email: 'test@example.com'
             }
         ],
         lastMessage: {
-            content: 'Rooms Created'
+            content: 'Room Created'
         },
         typingUsers: []
     }
@@ -95,6 +94,7 @@ const createRoom = () => {
     defaultRoomObject.value.roomName            = formData.roomName;
     defaultRoomObject.value.users[0]._id        = userStore.getUserData.userId;
     defaultRoomObject.value.users[0].username   = userStore.getUserData.name;
+    defaultRoomObject.value.users[0].avatar     = userStore.getUserData.avatar;
     defaultRoomObject.value.users[0].email      = userStore.getUserData.email;
 
     addRoom(defaultRoomObject.value)

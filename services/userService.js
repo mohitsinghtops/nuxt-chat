@@ -13,17 +13,19 @@ export const addUser = async (item) => {
 
     const defaultRoom = {
         roomId: generateRandomDigit().toString(),
-        roomName: 'Demo Room',
+        roomName: user.name + "'s Demo Room",
         avatar: 'https://img.icons8.com/bubbles/50/group.png',
         users: [
             {
                 _id: user.userId,
                 username: user.name,
-                email: user.email
+                email: user.email,
+                avatar: 'https://img.icons8.com/bubbles/50/user.png',
+                isAdmin: true,
             }
         ],
         lastMessage: {
-            content: 'Rooms Created'
+            content: 'Room Created'
         },
         typingUsers: []
     }

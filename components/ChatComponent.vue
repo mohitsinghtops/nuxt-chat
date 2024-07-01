@@ -24,6 +24,9 @@
             @handleRoomDetail="handleRoomDetail"></room-detail-modal>
 
         <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId" @add-room-user="handleAddRemoveUser"></add-remove-room-user>
+
+        <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal"
+            @handleProfileDetail="handleProfileDetail"></profile-detail-modal>
     </div>
 </template>
 
@@ -66,6 +69,7 @@ const messagesLoaded = ref(false);
 const currentUserId = ref("");
 const dataLoaded = ref(true);
 const showAddUserModal = ref(false);
+const showProfileModal = ref(false);
 const messageSelectionActions = ref([
     {
         name: "deleteMessages",
@@ -75,6 +79,10 @@ const messageSelectionActions = ref([
 const rooms = ref([]);
 const messages = ref([]);
 const roomActions = ref([
+    {
+        name: "myProfile",
+        title: "My Profile",
+    },
     {
         name: "addUser",
         title: "Add User",
@@ -126,36 +134,36 @@ const screenHeight = computed(() => {
 const fetchAllRooms = async (type = "") => {
     dataLoaded.value = type != "mount" ? true : false;
     roomsLoaded.value = false;
-    await getUserRooms(currentUserId.value)
-        .then((res) => {
-            rooms.value = res;
-            if (res.length < 1) {
-                modalType.value = "room";
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-        })
-        .finally(() => {
+
+    // Reference to Firestore collection
+    const roomsCollection = collection(db, 'rooms');
+    const roomsQuery = query(roomsCollection, orderBy('createdAt'));
+
+    setTimeout(() => {
+        onSnapshot(roomsQuery, (snapshot) => {
+            const allRooms = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+    
+            let userRooms = [];
+            allRooms.forEach((room) => {
+                const filteredRooms = room.users.filter((user) => user._id == currentUserId.value);
+                if (filteredRooms?.length) {
+                    userRooms.push(room);
+                }
+            });
+    
+            rooms.value = userRooms;
             roomsLoaded.value = true;
             dataLoaded.value = true;
         });
+    }, 500)
 };
 
 const fetchMessages = async ({ room, options = {} }) => {
     messagesLoaded.value = false;
     messages.value = [];
-    // const res = await getRoomMessages(room.roomId);
-
-    // setTimeout(() => {
-    //     if (res) {
-    //         messages.value = res;
-    //         messagesLoaded.value = true;
-    //     } else {
-    //         messagesLoaded.value = true;
-    //     }
-    //     messagesLoaded.value = true;
-    // }, 1000);
 
     // Reference to Firestore collection
     const messagesCollection = collection(db, 'messages');
@@ -185,11 +193,11 @@ const sendMessage = async ({
 
     const finalMessageObj = {
         _id: messId,
-        avatar: 'https://img.icons8.com/bubbles/50/user.png',
+        avatar: userStore?.getUserData?.avatar || 'https://img.icons8.com/bubbles/50/user.png',
         content: content ?? "",
         // senderId        : '2',
         senderId: currentUserId.value,
-        username: userStore.getUserData.name,
+        username: userStore?.getUserData?.name,
         roomId: roomId,
         timestamp: new Date().toString().substring(16, 21),
         date: new Date().toDateString(),
@@ -230,7 +238,7 @@ const sendMessage = async ({
         }
     }
     await updateLastRoomMessage(finalMessageObj);
-    fetchAllRooms();
+    // fetchAllRooms();
 };
 
 const editMessage = async ({ roomId, messageId, newContent, files, replyMessage, usersTag }) => {
@@ -335,13 +343,15 @@ const menuActionHandler = async (data) => {
     selectedRoomId.value = roomId
 
     switch (actionName) {
+        case "myProfile":
+            showProfileModal.value = true
+            break;
         case "addUser":
             addRemoveType.value = "add"
             showAddUserModal.value = true
             break;
         case "removeUser":
-            addRemoveType.value = "remove"
-            showAddUserModal.value = true
+            handleRemoveUserFromRoom(roomId);
             break;
         case "deleteRoom":
             await useConfirmationToast('warning', 'You won\'t be able to revert this!')
@@ -359,12 +369,25 @@ const menuActionHandler = async (data) => {
     }
 };
 
+const handleRemoveUserFromRoom = (roomId) => {
+    const room = rooms.value.find((item) => item.roomId == roomId)
+    const user = room.users.find((data) => data._id == currentUserId.value)
+    
+    if(user?.isAdmin) {
+        addRemoveType.value = "remove"
+        showAddUserModal.value = true
+    } else {
+        selectedRoomId.value = ''
+        useToast('error', 'Only room admin can remove users')
+    }
+}
+
 const deleteCurrentRoom = async (roomId) => {
     if (rooms.value.length > 0) {
         roomsLoaded.value = false;
         const room = rooms.value.find((room) => room.roomId == roomId);
         await deleteRoomWithAllMessages(room.id, roomId);
-        await fetchAllRooms();
+        // await fetchAllRooms();
     }
 };
 
@@ -385,13 +408,13 @@ const userLogout = () => {
 const handleAddRemoveUser = async (value) => {
     showAddUserModal.value = false
     selectedRoomId.value = ''
-    if (value) {
-        await fetchAllRooms();
-    }
+    // if (value) {
+    //     await fetchAllRooms();
+    // }
 };
 
 const handleRemoveUser = async (roomId) => {
-    await fetchAllRooms();
+    // await fetchAllRooms();
 }
 
 const messageSelectionActionHandler = ({ roomId, action, messages }) => {
@@ -417,9 +440,9 @@ const addNewRoom = () => {
 
 const handleRoomCreate = (data) => {
     modalType.value = "";
-    if (data) {
-        fetchAllRooms();
-    }
+    // if (data) {
+    //     fetchAllRooms();
+    // }
 };
 
 const openFile = async ({ message, file }) => {
@@ -438,9 +461,14 @@ const handleRoomDetail = (value) => {
     showRoomModal.value = false;
     selectedRoomId.value = ""
     modalType.value = ''
-    if (value) {
-        fetchAllRooms();
-    }
+    // if (value) {
+    //     fetchAllRooms();
+    // }
 }
+
+const handleProfileDetail = (value) => {
+    showProfileModal.value = false;
+}
+
 
 </script>
