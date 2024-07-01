@@ -139,26 +139,24 @@ const fetchAllRooms = async (type = "") => {
     const roomsCollection = collection(db, 'rooms');
     const roomsQuery = query(roomsCollection, orderBy('createdAt'));
 
-    setTimeout(() => {
-        onSnapshot(roomsQuery, (snapshot) => {
-            const allRooms = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-    
-            let userRooms = [];
-            allRooms.forEach((room) => {
-                const filteredRooms = room.users.filter((user) => user._id == currentUserId.value);
-                if (filteredRooms?.length) {
-                    userRooms.push(room);
-                }
-            });
-    
-            rooms.value = userRooms;
-            roomsLoaded.value = true;
-            dataLoaded.value = true;
+    onSnapshot(roomsQuery, (snapshot) => {
+        const allRooms = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        let userRooms = [];
+        allRooms.forEach((room) => {
+            const filteredRooms = room.users.filter((user) => user._id == currentUserId.value);
+            if (filteredRooms?.length) {
+                userRooms.push(room);
+            }
         });
-    }, 500)
+
+        rooms.value = userRooms;
+        roomsLoaded.value = true;
+        dataLoaded.value = true;
+    });
 };
 
 const fetchMessages = async ({ room, options = {} }) => {
@@ -169,15 +167,13 @@ const fetchMessages = async ({ room, options = {} }) => {
     const messagesCollection = collection(db, 'messages');
     const messagesQuery = query(messagesCollection, where('roomId', '==', room.roomId), orderBy('createdAt'));
 
-    setTimeout(() => {
-        onSnapshot(messagesQuery, (snapshot) => {
-            messages.value = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-        });
-        messagesLoaded.value = true;
-    }, 1000);
+    onSnapshot(messagesQuery, (snapshot) => {
+        messages.value = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    });
+    messagesLoaded.value = true;
 
 };
 
