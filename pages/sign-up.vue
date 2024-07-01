@@ -62,52 +62,51 @@
 </template>
 
 <script lang="js" setup>
-    import { generateRandomId } from '~/helpers/common.js'
-    import { addUser, getUsers, getUserByField } from '~/services/userService.js'
+import { generateRandomId } from '~/helpers/common.js'
+import { addUser, getUsers, getUserByField } from '~/services/userService.js'
 
-    definePageMeta({
-        middleware: ['guest']
-    })
+definePageMeta({
+    middleware: ['guest']
+})
 
-    useHead({
-        title: 'Sign Up',
-    })
+useHead({
+    title: 'Sign Up',
+})
 
-    const error = ref(null);
-    const loading = ref(false)
-    const formData = reactive({
-        name: '',
-        email: '',
-        userId: '',
-    })
+const error = ref(null);
+const loading = ref(false)
+const formData = reactive({
+    name: '',
+    email: '',
+    userId: '',
+})
 
-    const handleSubmit = async() => {
-        loading.value = true;
-        error.value = '';
+const handleSubmit = async() => {
+    loading.value = true;
+    error.value = '';
 
-        try {
-            const user = await getUserByField('email', formData.email);
-    
-            if(user) {
-                formData.email = ''
-                formData.name = ''
-                error.value = 'Email already exists.';
-                return;
-            }
-            
-            const users = await getUsers();
-            formData.userId = users.length + 1;
-    
-            const res = await addUser(formData)
-            if(res) {
-                navigateTo('/sign-in')
-            }
+    try {
+        const user = await getUserByField('email', formData.email);
 
-        } catch (err) {
-            console.log('err: ', err)
-        } finally {
-            loading.value = false;
+        if(user) {
+            formData.email = ''
+            formData.name = ''
+            error.value = 'Email already exists.';
+            return;
         }
-    }
-</script>
 
+        const users = await getUsers();
+        formData.userId = users.length + 1;
+
+        const res = await addUser(formData)
+        if(res) {
+            navigateTo('/sign-in')
+        }
+
+    } catch (err) {
+        console.log('err: ', err)
+    } finally {
+        loading.value = false;
+    }
+}
+</script>

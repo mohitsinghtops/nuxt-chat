@@ -23,19 +23,6 @@ export const addData = async (item, collectionName) => {
 
 export const getAllData = async (collectionName, order = 'asc') => {
     const q = query(collection(db, collectionName), orderBy('createdAt', order))
-    let resultData = [];
-
-    // onSnapshot(q, (snapshot) => {
-    //     resultData = snapshot.docs.map(doc => ({
-    //         id: doc.id,
-    //         ...doc.data()
-    //     }));
-        
-    //     // return items;
-    // });
-    
-    console.log('resultData', resultData) 
-    
     let items = []
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {

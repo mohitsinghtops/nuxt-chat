@@ -148,6 +148,10 @@
             return;
         }
 
+        addUserData();
+    };
+
+    const addUserData = async() => {
         const userWithEmail = selectedRoom.value.users.find((roomUser) => roomUser._id == user.userId);
 
         if(userWithEmail) {
@@ -175,7 +179,7 @@
         error.value = '';
         useToast('success', 'User Added Successfully')
         emit('add-room-user', true)
-    };
+    }
 
     const handleRemoveUser = async() => {
         if(formData.selectedUsers.length) {
