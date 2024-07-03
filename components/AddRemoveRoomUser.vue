@@ -126,8 +126,12 @@
     onMounted(async() => {
         dataLoading.value = true;
         currentUserId.value = localStorage.getItem('userId');
-        selectedRoom.value = await getRoomWithRoomId(props.roomId);
-        dataLoading.value = false;
+        if(props.type != 'add') {
+            selectedRoom.value = await getRoomWithRoomId(props.roomId);
+            dataLoading.value = false;
+        } else {
+            dataLoading.value = false;
+        }
     })
 
     const emit = defineEmits(['add-room-user']);

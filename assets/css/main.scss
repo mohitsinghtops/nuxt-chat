@@ -8,8 +8,20 @@
 html,
 body {
   font-family: 'Space Grotesk', sans-serif;
+  background-color: #181818;
 }
 
 .sweetalert {
   border: 1px solid rgb(249, 250, 251, 0.1);
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #0080f7, #1b48c3);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  // background: linear-gradient('#0080f7', '#1b48c3');
+  // -webkit-background-clip: text;
+  // -webkit-text-fill-color: transparent;
 }
