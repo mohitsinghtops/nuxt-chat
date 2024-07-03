@@ -7,7 +7,7 @@
 <script lang="ts" setup>
 definePageMeta({
     layout: 'auth',
-    middleware: ["auth"],
+    middleware: ['auth'],
 });
 useHead({
   title: "Chat App",

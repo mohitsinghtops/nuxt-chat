@@ -92,9 +92,9 @@ const createRoom = () => {
     
     defaultRoomObject.value.roomId              = generateRandomDigit().toString();
     defaultRoomObject.value.roomName            = formData.roomName;
-    defaultRoomObject.value.users[0]._id        = userStore.getUserData.userId;
-    defaultRoomObject.value.users[0].username   = userStore.getUserData.name;
-    defaultRoomObject.value.users[0].avatar     = userStore.getUserData.avatar;
+    defaultRoomObject.value.users[0]._id        = userStore.getUserData.uid;
+    defaultRoomObject.value.users[0].username   = userStore.getUserData.displayName ?? '';
+    defaultRoomObject.value.users[0].avatar     = userStore.getUserData.photoURL;
     defaultRoomObject.value.users[0].email      = userStore.getUserData.email;
 
     addRoom(defaultRoomObject.value)
@@ -102,7 +102,6 @@ const createRoom = () => {
         handleCloseModal(true);
         useToast('success', 'Room created successfully')
     }).catch((err) => {
-        console.log('err: ', err)
         useToast('error', err)
     }).finally(() => {
         loading.value = true;

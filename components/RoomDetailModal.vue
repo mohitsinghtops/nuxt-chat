@@ -107,30 +107,22 @@
 
     const updateRoomDetails = async() => {
         loading.value = true
-        if(selectedFile.value) {
-            const url = await uploadRoomFile(currentUserId.value, formData.value.id, selectedFile.value)
-    
-            await updateRoom(formData.value.id, {
-                roomName: formData.value.roomName,
-                avatar: url
-            });
-    
-            formData.value.avatar = url
 
-            selectedFile.value = null;
-            loading.value = false;
-            useToast('success', 'Room details updated successfully')
-            emit('handle-room-detail', true)
-        } else {
-            await updateRoom(formData.value.id, {
-                roomName: formData.value.roomName,
-            });
-            
-            selectedFile.value = null;
-            loading.value = false
-            useToast('success', 'Room details updated successfully')
-            emit('handle-room-detail', true)
-        }
+        let url = formData.value.avatar
+        if(selectedFile.value) {
+            url = await uploadRoomFile(currentUserId.value, formData.value.id, selectedFile.value)
+        } 
+
+        await updateRoom(formData.value.id, {
+            roomName: formData.value.roomName,
+            avatar: url
+        });
+
+        formData.value.avatar = url
+        selectedFile.value = null;
+        loading.value = false;
+        useToast('success', 'Room details updated successfully')
+        emit('handle-room-detail', true)
     }
 
     const handleCameraClick = () => {

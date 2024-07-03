@@ -8,7 +8,7 @@
                 <div class="relative rounded-lg shadow bg-grayPrimary border border-gray-50/10">
                     <!-- Modal header -->
                     <div class="flex items-center justify-between px-4 py-3 border-b rounded-t border-gray-50/10">
-                        <h3 class="text-xl font-semibold text-white">{{ type == 'add' ? 'Add User' : 'Remove Users'}}</h3>
+                        <h3 class="text-xl font-semibold text-white">{{ type == 'add' ? 'Invite User' : 'Remove Users'}}</h3>
                         <button type="button"
                             class="end-2.5 text-gray-400 bg-transparent rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
                             data-modal-hide="authentication-modal"
@@ -23,7 +23,7 @@
                         </button>
                     </div>
                     <!-- Modal body -->
-                    <div class="p-4 md:p-5">
+                    <div class="p-4 md:p-5 max-h-[350px] overflow-auto">
                         <templaye v-if="dataLoading">
                             <loading-component class="h-[calc(100%-1rem)]"></loading-component>
                         </templaye>
@@ -67,7 +67,7 @@
                                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                                                     />
                                                     <label :for="'user_' + user._id" class="text-sm font-medium text-gray-300">
-                                                        {{ user.username }}
+                                                        {{ user?.email }} {{ user?.username ? '(' + user?.username + ')' : '' }}
                                                     </label>
                                                 </div>
                                             </template>
@@ -99,6 +99,7 @@
 <script setup>
     import { getUserByField, getUsers, addUser } from "~/services/userService.js";
     import { getRoomWithRoomId, updateRoom } from "~/services/roomService.js";
+    // import { inviteUser } from "~/services/emailService";
 
     const props = defineProps({
         roomId: {
@@ -136,43 +137,10 @@
     }
 
     const handleAddUser = async() => {
-        loading.value = true
+        loading.value = true;
         error.value = '';
 
-        const user = await getUserByField('email', formData.email);
-
-        if(!user) {
-            // error.value = 'User not found with selected email'
-            // loading.value = false
-            // useToast('error', 'User not found with selected email')
-            useConfirmationToast('warning', 'Do you want to create a new user with selected email?')
-            .then(async(result) => {
-                if(result.isConfirmed) {
-                    const users = await getUsers();
-                    const userData = {
-                        name: '',
-                        email: formData.email,
-                        name: formData.email.split('@')[0],
-                        userId: users.length + 1,
-                        avatar: '',
-                    }
-                    const res = await addUser(userData)
-                    if(res) {
-                        addUserData(userData)
-                    }
-                }
-            }).finally(() => {
-                loading.value = false
-                error.value = '';
-            })
-        } else {
-            addUserData(user);
-        }
-
-    };
-
-    const addUserData = async(user) => {
-        const userWithEmail = selectedRoom.value.users.find((roomUser) => roomUser._id == user.userId);
+        const userWithEmail = selectedRoom.value.users.find((roomUser) => roomUser.email == formData.email);
 
         if(userWithEmail) {
             error.value = 'User already added in room.'
@@ -181,26 +149,31 @@
             return;
         }
 
-        const allRoomUsers = selectedRoom.value.users;
-
-        allRoomUsers.push({
-            _id: user.userId,
-            email: user.email,
-            username: user.name,
-        })
-
-        let data = {
-            users: allRoomUsers
+        const data = {
+            userEmail: formData.email,
+            roomId: selectedRoom.value.id,
+            invitedBy: currentUserId.value,
         }
 
-        await updateRoom(selectedRoom.value.id, data);
-        formData.email = ""
+        await useFetch('/api/invite', {
+            method: 'post',
+            body: data
+        }).then((res) => {
+            if(res.status.value == 'success') {
+                formData.email = '';
+                useToast('success', 'User invited successfully')
+            } else {
+                useToast('error', 'Error on invite user. Contact your administrator.')
+            }
+        }).catch((error) => {
+            useToast('error', 'Error on invite user. Contact your administrator.')
+        }).finally(() => {
+            loading.value = false
+            error.value = '';
+            emit('add-room-user', false)
+        })
 
-        loading.value = false
-        error.value = '';
-        useToast('success', 'User Added Successfully')
-        emit('add-room-user', true)
-    }
+    };
 
     const handleRemoveUser = async() => {
         if(formData.selectedUsers.length) {

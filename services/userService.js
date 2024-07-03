@@ -7,30 +7,7 @@ import { addRoom } from './roomService';
 const collectionName = 'users'
 
 export const addUser = async (item) => {
-
-    const { id } = await addData(item, collectionName);
-    const user = await getDataById(id, collectionName);
-
-    const defaultRoom = {
-        roomId: generateRandomDigit().toString(),
-        roomName: user.name + "'s Demo Room",
-        avatar: 'https://img.icons8.com/bubbles/50/group.png',
-        users: [
-            {
-                _id: user.userId,
-                username: user.name,
-                email: user.email,
-                avatar: 'https://img.icons8.com/bubbles/50/user.png',
-                isAdmin: true,
-            }
-        ],
-        lastMessage: {
-            content: 'Room Created'
-        },
-        typingUsers: []
-    }
-
-    return await addRoom(defaultRoom);
+    return await addData(item, collectionName);
 }
 
 export const getUsers = async () => {

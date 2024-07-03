@@ -1,7 +1,10 @@
-export default defineNuxtRouteMiddleware(() => {
-    const userId = useCookie('userId')
+export default defineNuxtRouteMiddleware((to, from) => {
+    const accessToken = useCookie('accessToken')
 
-    if (!userId.value) {
-        return navigateTo("/sign-in");
+    if (!accessToken.value) {
+        return navigateTo({
+            path: "/sign-in",
+            query: to.query
+        });
     }
 });

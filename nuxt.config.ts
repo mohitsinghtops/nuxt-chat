@@ -7,6 +7,10 @@ export default defineNuxtConfig({
         "@": path.resolve(__dirname),
     },
 
+    devServer: {
+        port: 8080
+    },
+
     ssr: false,
 
     app: {
@@ -25,7 +29,7 @@ export default defineNuxtConfig({
             FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
             FIREBASE_SENDER_ID: process.env.FIREBASE_SENDER_ID,
             FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
-            FIREBASE_MEASUREMENT_ID: process.env.FIREBASE_MEASUREMENT_ID
+            FIREBASE_MEASUREMENT_ID: process.env.FIREBASE_MEASUREMENT_ID,
         },
     },
 

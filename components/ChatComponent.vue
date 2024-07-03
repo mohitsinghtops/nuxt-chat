@@ -25,7 +25,7 @@
 
         <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId" @add-room-user="handleAddRemoveUser"></add-remove-room-user>
 
-        <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal"
+        <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal" :type="profileModalType"
             @handleProfileDetail="handleProfileDetail"></profile-detail-modal>
     </div>
 </template>
@@ -63,6 +63,7 @@ const showRoomModal = ref(false);
 const showRoomInfo = ref(false);
 const roomDetails = ref({});
 const addRemoveType = ref("")
+const profileModalType = ref("profile")
 const roomsLoaded = ref(false);
 const selectedRoomId = ref("");
 const messagesLoaded = ref(false);
@@ -85,7 +86,7 @@ const roomActions = ref([
     },
     {
         name: "addUser",
-        title: "Add User",
+        title: "Invite User",
     },
     {
         name: "removeUser",
@@ -95,6 +96,10 @@ const roomActions = ref([
         name: "deleteRoom",
         title: "Delete Room",
     },
+    // {
+    //     name: "changePassword",
+    //     title: "Change Password",
+    // },
     {
         name: "logOut",
         title: "Log Out",
@@ -168,12 +173,17 @@ const fetchMessages = async ({ room, options = {} }) => {
     const messagesQuery = query(messagesCollection, where('roomId', '==', room.roomId), orderBy('createdAt'));
 
     onSnapshot(messagesQuery, (snapshot) => {
-        messages.value = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        if(snapshot?.docs?.length > 0) {
+            messages.value = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            messagesLoaded.value = true;
+        } else {
+            messages.value = [];
+            messagesLoaded.value = true;
+        }
     });
-    messagesLoaded.value = true;
 
 };
 
@@ -189,11 +199,10 @@ const sendMessage = async ({
 
     const finalMessageObj = {
         _id: messId,
-        avatar: userStore?.getUserData?.avatar || 'https://img.icons8.com/bubbles/50/user.png',
+        avatar: userStore?.getUserData?.photoURL || 'https://img.icons8.com/bubbles/50/user.png',
         content: content ?? "",
-        // senderId        : '2',
         senderId: currentUserId.value,
-        username: userStore?.getUserData?.name,
+        username: userStore?.getUserData?.displayName ?? userStore?.getUserData?.email,
         roomId: roomId,
         timestamp: new Date().toString().substring(16, 21),
         date: new Date().toDateString(),
@@ -340,6 +349,7 @@ const menuActionHandler = async (data) => {
 
     switch (actionName) {
         case "myProfile":
+            profileModalType.value = 'profile';
             showProfileModal.value = true
             break;
         case "addUser":
@@ -356,6 +366,10 @@ const menuActionHandler = async (data) => {
                     deleteCurrentRoom(roomId);
                 }
             })
+            break;
+        case "changePassword":
+            profileModalType.value = 'changePassword';
+            showProfileModal.value = true
             break;
         case "logOut":
             userLogout();
@@ -380,20 +394,27 @@ const handleRemoveUserFromRoom = (roomId) => {
 
 const deleteCurrentRoom = async (roomId) => {
     if (rooms.value.length > 0) {
-        roomsLoaded.value = false;
-        const room = rooms.value.find((room) => room.roomId == roomId);
-        await deleteRoomWithAllMessages(room.id, roomId);
+        const room = rooms.value.find((item) => item.roomId == roomId)
+        const user = room.users.find((data) => data._id == currentUserId.value)
+
+        
+        if(user?.isAdmin) {
+            await deleteRoomWithAllMessages(room.id, roomId);
+            roomsLoaded.value = false;
+        } else {
+            useToast('error', 'Only room admin can delete room')
+            roomsLoaded.value = false;
+        }
         // await fetchAllRooms();
     }
 };
 
 const userLogout = () => {
-    const userId = useCookie('userId')
-    userId.value = null
-    const userEmail = useCookie('email')
-    userEmail.value = null;
+    const accessToken = useCookie('accessToken')
+    accessToken.value = null
 
     localStorage.removeItem('userId')
+    localStorage.removeItem('email')
 
     userStore.setIsLoggedIn(false);
     userStore.setUserData(null);
