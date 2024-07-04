@@ -1,4 +1,4 @@
-import { addData, getAllData, getDataByField, getDataArrByField, updateCollectionData, deleteCollectionData, getDataById } from '@/database/firebaseService';
+import { addData, getAllData, getDataByField, getAllDataByField, updateCollectionData, deleteCollectionData, getDataById } from '@/database/firebaseService';
 import { collection, query, orderBy } from 'firebase/firestore'
 import { db } from '~/database'
 
@@ -40,7 +40,7 @@ export const deleteRoom = async (id) => {
 
 export const deleteRoomWithAllMessages = async (id, roomId) => {
     await deleteCollectionData(id, collectionName)
-    const messages = await getDataArrByField('roomId', roomId, 'messages');
+    const messages = await getAllDataByField('roomId', roomId, 'messages');
     messages.forEach((message) => {
         deleteCollectionData(message.id, 'messages')
     })

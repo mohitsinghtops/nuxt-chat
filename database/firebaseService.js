@@ -31,13 +31,13 @@ export const getAllData = async (collectionName, order = 'asc') => {
     return items
 }
 
-const getDataFromSnapshots = (snapshots) => {
-    const result = [];
-    result =  snapshots.docs.map(doc => ({
-        id: doc.id,
-       ...doc.data()
-    }));
-    return result
+export const getDataByQuery = async (query) => {
+    const querySnapshot = await getDocs(query);
+    const items = []
+    querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() })
+    })
+    return items
 }
 
 export const getDataByField = async (field, value, collectionName, order = 'asc') => {
@@ -50,7 +50,7 @@ export const getDataByField = async (field, value, collectionName, order = 'asc'
     return items?.length ? items[0] : null
 }
 
-export const getDataArrByField = async (field, value, collectionName, order = 'asc') => {
+export const getAllDataByField = async (field, value, collectionName, order = 'asc') => {
     const q = query(collection(db, collectionName), where(field, '==', value), orderBy('createdAt', order))
     const querySnapshot = await getDocs(q)
     const items = []

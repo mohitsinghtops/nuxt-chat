@@ -39,6 +39,8 @@
 
         <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal" :type="profileModalType"
             @handleProfileDetail="handleProfileDetail"></profile-detail-modal>
+
+        <invite-modal v-if="showInviteModal" :all-invite-list="allInviteItems" @handleInvites="handleInvites"></invite-modal>
     </div>
 </template>
 
@@ -65,6 +67,7 @@ import { useUserStore } from "~/store/user";
 
 import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore'
 import { db } from '~/database'
+import { getUsersPendingInvites } from "~/services/inviteService";
 
 register();
 
@@ -80,6 +83,7 @@ const roomsLoaded = ref(false);
 const selectedRoomId = ref("");
 const messagesLoaded = ref(false);
 const currentUserId = ref("");
+const currentUserEmail = ref("");
 const dataLoaded = ref(true);
 const showAddUserModal = ref(false);
 const showProfileModal = ref(false);
@@ -109,6 +113,10 @@ const adminRoomActions = ref([
         name: "deleteRoom",
         title: "Delete Room",
     },
+    {
+        name: "invitation",
+        title: "Invitation List",
+    },
     // {
     //     name: "changePassword",
     //     title: "Change Password",
@@ -118,7 +126,6 @@ const adminRoomActions = ref([
         title: "Log Out",
     },
 ]);
-
 const nonAdminRoomActions = ref([
     {
         name: "myProfile",
@@ -127,6 +134,10 @@ const nonAdminRoomActions = ref([
     {
         name: "addUser",
         title: "Invite User",
+    },
+    {
+        name: "invitation",
+        title: "Invitation List",
     },
     // {
     //     name: "changePassword",
@@ -158,15 +169,46 @@ const messageActions = ref([
         onlyMe: true,
     },
 ]);
+const showInviteModal = ref(false);
+const allInviteItems = ref([]);
 
 onMounted(() => {
     currentUserId.value = localStorage.getItem("userId");
+    currentUserEmail.value = localStorage.getItem("email");
     fetchAllRooms("mount");
+    getInviteRoomDetails();
 });
 
 const screenHeight = computed(() => {
     return window.innerHeight + "px";
 });
+
+const getInviteRoomDetails = async() => {
+
+    // Reference to Firestore collection
+    const invitesCollection = collection(db, 'invites');
+    const invitesQuery = query(invitesCollection, where('userEmail', '==', currentUserEmail.value), where('status', '==', 0))
+
+    onSnapshot(invitesQuery, (snapshot) => {
+        const allInvites = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        allInviteItems.value = allInvites
+
+        if(allInvites.length) {
+            showInviteModal.value = true;
+        } else {
+            showInviteModal.value = false;
+        }
+
+    });
+}
+
+const handleInvites = (data) => {
+    showInviteModal.value = false;
+}
 
 const fetchAllRooms = async (type = "") => {
     dataLoaded.value = type != "mount" ? true : false;
@@ -414,6 +456,9 @@ const menuActionHandler = async (data) => {
         case "changePassword":
             profileModalType.value = 'changePassword';
             showProfileModal.value = true
+            break;
+        case 'invitation':
+            showInviteModal.value = true;
             break;
         case "logOut":
             userLogout();

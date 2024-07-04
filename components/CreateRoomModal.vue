@@ -83,11 +83,11 @@ const emit = defineEmits(['create-room']);
 const props = defineProps({
     totalRooms: {
         type: Number,
-        required: true
+        default: 0,
     }
 })
 
-const createRoom = () => {
+const createRoom = async() => {
     loading.value = true;
     
     defaultRoomObject.value.roomId              = generateRandomDigit().toString();
@@ -96,8 +96,9 @@ const createRoom = () => {
     defaultRoomObject.value.users[0].username   = userStore.getUserData.displayName ?? '';
     defaultRoomObject.value.users[0].avatar     = userStore.getUserData.photoURL;
     defaultRoomObject.value.users[0].email      = userStore.getUserData.email;
+    defaultRoomObject.value.users[0].isAdmin    = true;
 
-    addRoom(defaultRoomObject.value)
+    await addRoom(defaultRoomObject.value)
     .then((res) => {
         handleCloseModal(true);
         useToast('success', 'Room created successfully')
@@ -114,12 +115,11 @@ const handleCloseModal = (value) => {
 
 
 const userLogout = () => {
-    const userId = useCookie('userId')
-    userId.value = null
-    const userEmail = useCookie('email')
-    userEmail.value = null;
+    const accessToken = useCookie('accessToken')
+    accessToken.value = null
 
     localStorage.removeItem('userId')
+    localStorage.removeItem('email')
 
     userStore.setIsLoggedIn(false);
     userStore.setUserData(null);

@@ -1,4 +1,4 @@
-import {addData, getAllData, getDataByField, getDataArrByField, updateCollectionData, deleteCollectionData, getDataById} from '@/database/firebaseService';
+import {addData, getAllData, getDataByField, getAllDataByField, updateCollectionData, deleteCollectionData, getDataById} from '@/database/firebaseService';
 import  {updateRoom} from '@/services/roomService';
 import { collection,  query,  orderBy, arrayRemove, arrayUnion } from 'firebase/firestore'
 import { db } from '~/database'
@@ -24,7 +24,7 @@ export const getMessageById = async (id) => {
 }
 
 export const getRoomMessages = async (roomId) => {
-  return await getDataArrByField('roomId', roomId, collectionName, )
+  return await getAllDataByField('roomId', roomId, collectionName, )
 }
 
 export const updateMessage = async (id, item) => {

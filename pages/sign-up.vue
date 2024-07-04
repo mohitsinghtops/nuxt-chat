@@ -119,6 +119,14 @@ const handleSubmit = async () => {
     await signUpUser(formData)
         .then(async (res) => {
             await handleAddDefaultRoom(res.user)
+  
+            await addUser({
+                userId: res.user.uid,
+                email: res.user.email,
+                displayName: res.user.displayName ?? res.user.email.split('@')[0],
+                photoURL: res.user.photoURL ?? '',
+            });
+
             useToast('success', 'Sign up successsfully')
             redirectTo()
         })

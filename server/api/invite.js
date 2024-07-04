@@ -1,4 +1,5 @@
 import transport from '~/services/emailService'
+import { addInvite } from '~/services/inviteService'
 
 // Configure the mailoptions object
 const mailOptions = {
@@ -25,10 +26,10 @@ export default defineEventHandler(async (event) => {
     const options = await readBody(event)
 
     const url = ` 
-    ${process.env.FRONTEND_URL}/sign-in?join=room&roomId=${options.roomId}&userEmail=${options.userEmail}&invitedBy=${options.invitedBy}
-    `
+    ${process.env.FRONTEND_URL}/sign-up`
 
     mailOptions.to = options.userEmail
     mailOptions.text = text1 + url + text2
+
     return await transport.sendMail(mailOptions);
 })

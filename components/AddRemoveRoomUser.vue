@@ -29,7 +29,7 @@
                         </templaye>
 
                         <template v-else>
-                            <form class="space-y-4" v-if="type == 'add'" @submit.prevent="handleAddUser">
+                            <form class="space-y-4" v-if="type == 'add'" @submit.prevent="handleInviteUser">
                                 <div>
                                     <label for="user_email" class="block mb-2 text-sm font-medium text-white">User Email</label>
                                     <input type="email" name="user_email" id="user_email" v-model="formData.email"
@@ -58,7 +58,7 @@
                                         <div class="flex gap-4 flex-wrap items-start mb-3">
         
                                             <template v-for="user in selectedRoom.users" :key="user._id">
-                                                <div class="flex items-center gap-2" v-if="currentUserId != user._id">
+                                                <div class="flex items-start gap-3" v-if="currentUserId != user._id">
                                                     <input
                                                         :id="'user_' + user._id"
                                                         type="checkbox"
@@ -66,7 +66,7 @@
                                                         :value="user._id"
                                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                                                     />
-                                                    <label :for="'user_' + user._id" class="text-sm font-medium text-gray-300">
+                                                    <label :for="'user_' + user._id" class="text-sm -mt-2 font-medium text-gray-300">
                                                         {{ user?.email }} {{ user?.username ? '(' + user?.username + ')' : '' }}
                                                     </label>
                                                 </div>
@@ -99,6 +99,8 @@
 <script setup>
     import { getUserByField, getUsers, addUser } from "~/services/userService.js";
     import { getRoomWithRoomId, updateRoom } from "~/services/roomService.js";
+    import { addInvite, getInviteByRoomAndEmail } from "~/services/inviteService";
+    import { useUserStore } from "~/store/user";
     // import { inviteUser } from "~/services/emailService";
 
     const props = defineProps({
@@ -122,16 +124,14 @@
     })
 
     const selectedRoom = ref({});
+    const userStore = useUserStore();;
 
     onMounted(async() => {
         dataLoading.value = true;
         currentUserId.value = localStorage.getItem('userId');
-        if(props.type != 'add') {
-            selectedRoom.value = await getRoomWithRoomId(props.roomId);
-            dataLoading.value = false;
-        } else {
-            dataLoading.value = false;
-        }
+        selectedRoom.value = await getRoomWithRoomId(props.roomId);
+        dataLoading.value = false;
+        
     })
 
     const emit = defineEmits(['add-room-user']);
@@ -140,10 +140,10 @@
         emit('add-room-user', false)
     }
 
-    const handleAddUser = async() => {
+    const handleInviteUser = async() => {
         loading.value = true;
         error.value = '';
-
+        
         const userWithEmail = selectedRoom.value.users.find((roomUser) => roomUser.email == formData.email);
 
         if(userWithEmail) {
@@ -153,11 +153,27 @@
             return;
         }
 
+        const invite = await getInviteByRoomAndEmail(selectedRoom.value.id, formData.email )
+        
+        if(invite) {
+            error.value = 'User already invited.'
+            loading.value = false
+            useToast('error', 'User already invited')
+            return;
+        }
+
         const data = {
             userEmail: formData.email,
             roomId: selectedRoom.value.id,
             invitedBy: currentUserId.value,
+            invitedByUserEmail: userStore?.getUserData?.email,
+            invitedByUserName: userStore?.getUserData?.displayName,
+            roomName: selectedRoom.value.roomName,
+            avatar: selectedRoom.value.avatar,
+            status: 0, // 0: not accepted, 1: accepted
         }
+
+        await addInvite(data);
 
         await useFetch('/api/invite', {
             method: 'post',

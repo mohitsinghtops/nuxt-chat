@@ -88,10 +88,6 @@ const handleSubmit = async () => {
             userStore.setIsLoggedIn(true);
             userStore.setUserData(user);
 
-            if(route.query.roomId && route.query.invitedBy != user.uid && route.query?.userEmail == user.email) {
-                await handleUserAdd(user);
-            }
-
             error.value = null
             loading.value = false
             useToast('success', 'Sign in successsfully')
@@ -108,29 +104,6 @@ const handleSubmit = async () => {
             loading.value = false;
         })
 
-}
-
-const handleUserAdd = async(user) => {
-    const room = await getRoomById(route.query.roomId);
-
-    if(!room) {
-        return true;
-    }
-
-    const allRoomUsers = room.users;
-
-    allRoomUsers.push({
-        _id: user?.uid,
-        email: user?.email,
-        username: user?.displayName ?? '',
-        avatar: user?.photoURL ?? 'https://img.icons8.com/bubbles/50/user.png',
-    })
-
-    let data = {
-        users: allRoomUsers
-    }
-
-    return await updateRoom(route.query.roomId, data);
 }
 
 const redirectTo = () => {

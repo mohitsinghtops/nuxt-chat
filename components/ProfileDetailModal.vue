@@ -165,15 +165,25 @@ const updateProfileDetails = async () => {
         url = await uploadUserProfile(currentUserId.value, selectedFile.value)
     }
 
-    await updateUserProfile({
+    const userData = {
         displayName: formData.value.name,
         photoURL: url
-    });
+    }
 
-    formData.value.avatar = url
-    selectedFile.value = null;
-    loading.value = false;
-    useToast('success', 'User details updated successfully')
+    const user = await getUserByField('email', formData.value.email);
+
+    await updateUserProfile(userData)
+    .then(async(res) => {
+        await updateUser(user.id, userData)
+        useToast('success', 'User details updated successfully')
+    }).catch((err) => {
+        console.log(err)
+        useToast('error', 'Error on updating user details')
+    }).finally(() => {
+        formData.value.avatar = url
+        selectedFile.value = null;
+        loading.value = false;
+    })
 
 }
 
