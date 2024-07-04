@@ -183,7 +183,7 @@
         if(formData.selectedUsers.length) {
 
             loading.value = true
-            useConfirmationToast('warning', 'Do you want to remove the seelcted users?')
+            useConfirmationToast('warning', 'Do you want to remove the selected users?')
             .then(async(result) => {
                 if(result.isConfirmed) {
                     const allRoomUsers = selectedRoom.value.users.filter((user) => {

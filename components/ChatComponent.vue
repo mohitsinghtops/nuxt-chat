@@ -4,26 +4,38 @@
             v-if="!dataLoaded">
             <loading-component :loading-text="false"></loading-component>
         </div>
-        <vue-advanced-chat ref="chatRef" height="calc(100vh - 10px)" :theme="'dark'"
-            :current-user-id="currentUserId" :rooms="rooms.length > 0 ? JSON.stringify(rooms) : []"
-            :rooms-loaded="roomsLoaded" :menu-actions="JSON.stringify(roomActions)"
-            :messages="messages.length > 0 ? JSON.stringify(messages) : []" :messages-loaded="messagesLoaded"
-            :message-actions="JSON.stringify(messageActions)" :room-info-enabled="true" :single-room="false"
+        <vue-advanced-chat 
+            ref="chatRef" 
+            height="calc(100vh - 10px)" 
+            :theme="'dark'" 
+            :current-user-id="currentUserId"
+            :rooms="rooms.length > 0 ? JSON.stringify(rooms) : []" 
+            :rooms-loaded="roomsLoaded"
+            :menu-actions="JSON.stringify(roomActions)" 
+            :messages="messages.length > 0 ? JSON.stringify(messages) : []"
+            :messages-loaded="messagesLoaded" 
+            :message-actions="JSON.stringify(messageActions)"
+            :room-info-enabled="true" :single-room="false"
             :message-selection-actions="JSON.stringify(messageSelectionActions)"
-            @send-message="sendMessage($event.detail[0])" @fetch-messages="fetchMessages($event.detail[0])"
-            @room-info="roomInfo($event.detail[0])" @menu-action-handler="menuActionHandler($event.detail[0])"
-            @message-selection-action-handler="
-                messageSelectionActionHandler($event.detail[0])
-                " @send-message-reaction="sendMessageReaction($event.detail[0])"
-            @edit-message="editMessage($event.detail[0])" @delete-message="deleteMessage($event.detail[0])"
-            @open-file="openFile($event.detail[0])" @add-room="addNewRoom" />
+            @send-message="sendMessage($event.detail[0])" 
+            @fetch-messages="fetchMessages($event.detail[0])"
+            @room-info="roomInfo($event.detail[0])" 
+            @menu-action-handler="menuActionHandler($event.detail[0])"
+            @message-selection-action-handler="messageSelectionActionHandler($event.detail[0])" 
+            @send-message-reaction="sendMessageReaction($event.detail[0])"
+            @edit-message="editMessage($event.detail[0])" 
+            @delete-message="deleteMessage($event.detail[0])"
+            @open-file="openFile($event.detail[0])" 
+            @add-room="addNewRoom" 
+        />
 
         <create-room-modal v-if="modalType == 'room'" @create-room="handleRoomCreate" :total-rooms="rooms.length" />
 
         <room-detail-modal v-if="showRoomModal" :room-id="selectedRoomId" :is-show-modal="showRoomModal"
             @handleRoomDetail="handleRoomDetail"></room-detail-modal>
 
-        <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId" @add-room-user="handleAddRemoveUser"></add-remove-room-user>
+        <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId"
+            @add-room-user="handleAddRemoveUser"></add-remove-room-user>
 
         <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal" :type="profileModalType"
             @handleProfileDetail="handleProfileDetail"></profile-detail-modal>
@@ -51,7 +63,7 @@ import {
 import { generateRandomId, generateRandomDigit, formattedFiles } from "~/helpers/common.js";
 import { useUserStore } from "~/store/user";
 
-import { collection,  query,  orderBy, onSnapshot, where } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore'
 import { db } from '~/database'
 
 register();
@@ -79,7 +91,8 @@ const messageSelectionActions = ref([
 ]);
 const rooms = ref([]);
 const messages = ref([]);
-const roomActions = ref([
+const roomActions = ref([]);
+const adminRoomActions = ref([
     {
         name: "myProfile",
         title: "My Profile",
@@ -90,11 +103,30 @@ const roomActions = ref([
     },
     {
         name: "removeUser",
-        title: "Remove User",
+        title: "Remove Users",
     },
     {
         name: "deleteRoom",
         title: "Delete Room",
+    },
+    // {
+    //     name: "changePassword",
+    //     title: "Change Password",
+    // },
+    {
+        name: "logOut",
+        title: "Log Out",
+    },
+]);
+
+const nonAdminRoomActions = ref([
+    {
+        name: "myProfile",
+        title: "My Profile",
+    },
+    {
+        name: "addUser",
+        title: "Invite User",
     },
     // {
     //     name: "changePassword",
@@ -168,12 +200,15 @@ const fetchMessages = async ({ room, options = {} }) => {
     messagesLoaded.value = false;
     messages.value = [];
 
+    // handle room actions to remove options from room actions
+    handleRoomAction(room);
+
     // Reference to Firestore collection
     const messagesCollection = collection(db, 'messages');
     const messagesQuery = query(messagesCollection, where('roomId', '==', room.roomId), orderBy('createdAt'));
 
     onSnapshot(messagesQuery, (snapshot) => {
-        if(snapshot?.docs?.length > 0) {
+        if (snapshot?.docs?.length > 0) {
             messages.value = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -184,8 +219,17 @@ const fetchMessages = async ({ room, options = {} }) => {
             messagesLoaded.value = true;
         }
     });
-
 };
+
+const handleRoomAction = (room) => {
+    const loggedInUser = room.users.find((user) => user._id == currentUserId.value);
+
+    if (loggedInUser?.isAdmin) {
+        roomActions.value = adminRoomActions.value
+    } else {
+        roomActions.value = nonAdminRoomActions.value
+    }
+}
 
 const sendMessage = async ({
     roomId,
@@ -268,28 +312,28 @@ const editMessage = async ({ roomId, messageId, newContent, files, replyMessage,
 const deleteMessage = async ({ roomId, message }) => {
 
     await useConfirmationToast('warning', 'You won\'t be able to revert this!')
-    .then(async(result) => {
-        if(result.isConfirmed) {
-            const data = {
-                deleted: new Date()
-            }
-        
-            await updateMessage(message.id, data);
-            messages.value.forEach((item) => {
-                if (item.id == message.id) {
-                    item.deleted = new Date()
+        .then(async (result) => {
+            if (result.isConfirmed) {
+                const data = {
+                    deleted: new Date()
                 }
-            })
-        
-            const { files } = message
-        
-            if (files) {
-                files.forEach(file => {
-                    deleteFile(currentUserId.value, message.id, file)
+
+                await updateMessage(message.id, data);
+                messages.value.forEach((item) => {
+                    if (item.id == message.id) {
+                        item.deleted = new Date()
+                    }
                 })
+
+                const { files } = message
+
+                if (files) {
+                    files.forEach(file => {
+                        deleteFile(currentUserId.value, message.id, file)
+                    })
+                }
             }
-        }
-    })
+        })
 }
 
 const uploadFile = async ({ file, messageId, roomId }) => {
@@ -361,11 +405,11 @@ const menuActionHandler = async (data) => {
             break;
         case "deleteRoom":
             await useConfirmationToast('warning', 'You won\'t be able to revert this!')
-            .then((result) => {
-                if(result.isConfirmed) {
-                    deleteCurrentRoom(roomId);
-                }
-            })
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        deleteCurrentRoom(roomId);
+                    }
+                })
             break;
         case "changePassword":
             profileModalType.value = 'changePassword';
@@ -382,8 +426,8 @@ const menuActionHandler = async (data) => {
 const handleRemoveUserFromRoom = (roomId) => {
     const room = rooms.value.find((item) => item.roomId == roomId)
     const user = room.users.find((data) => data._id == currentUserId.value)
-    
-    if(user?.isAdmin) {
+
+    if (user?.isAdmin) {
         addRemoveType.value = "remove"
         showAddUserModal.value = true
     } else {
@@ -397,8 +441,8 @@ const deleteCurrentRoom = async (roomId) => {
         const room = rooms.value.find((item) => item.roomId == roomId)
         const user = room.users.find((data) => data._id == currentUserId.value)
 
-        
-        if(user?.isAdmin) {
+
+        if (user?.isAdmin) {
             await deleteRoomWithAllMessages(room.id, roomId);
             roomsLoaded.value = false;
         } else {
@@ -429,10 +473,6 @@ const handleAddRemoveUser = async (value) => {
     //     await fetchAllRooms();
     // }
 };
-
-const handleRemoveUser = async (roomId) => {
-    // await fetchAllRooms();
-}
 
 const messageSelectionActionHandler = ({ roomId, action, messages }) => {
     if (action.name == "deleteMessages") {

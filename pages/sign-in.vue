@@ -95,7 +95,10 @@ const handleSubmit = async () => {
             error.value = null
             loading.value = false
             useToast('success', 'Sign in successsfully')
-            navigateTo('/')
+            navigateTo({
+                path: '/',
+                query: route.query
+            })
         })
         .catch((error) => {
             error.value = error.message;

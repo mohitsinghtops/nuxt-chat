@@ -41,8 +41,9 @@
     
                 <div class="users mt-3">
                     <h4 class="text-white font-bold mb-2">Users: </h4>
-                    <div class="user mb-4" v-for="user in formData.users" :key="formData.id">
+                    <div class="user mb-4 flex items-start justify-between gap-4" v-for="user in formData.users" :key="formData.id">
                         <p class="text-gray-300 text-sm mb-1">{{ user.email }} <span>{{ user._id == currentUserId ? '(You)' : '' }}</span></p>
+                        <button class="bg-red-500 text-xs px-3 py-1 rounded text-white" v-if="user._id != currentUserId && isRoomAdmin" @click="removeUser(user)">Remove</button>
                     </div>
                 </div>
             </div>
@@ -93,6 +94,11 @@
         {deep: true, immediate: true}
     )
 
+    const isRoomAdmin = computed(() => {
+        const user = formData.value.users.find((user) => user._id == currentUserId.value)
+        return user.isAdmin;
+    })
+
     const getRoomDetail = async() => {
         dataLoading.value = true;
         const room = await getRoomWithRoomId(props.roomId);
@@ -133,6 +139,23 @@
         const file = e.target.files[0];
         formData.value.avatar = URL.createObjectURL(file);
         selectedFile.value = file;
+    }
+
+    const removeUser = async(user) => {
+        useConfirmationToast('warning', 'Do you want to remove the selected user?')
+            .then(async(result) => {
+                if(result.isConfirmed) {
+                    const allFilteredRoomUsers = formData.value.users.filter((item) => item._id != user._id)
+            
+                    let data = {
+                        users: allFilteredRoomUsers
+                    }
+            
+                    await updateRoom(formData.value.id, data);
+                    formData.value.users = allFilteredRoomUsers
+                    useToast('success', 'Users removed Successfully')
+                }
+            })
     }
 
 </script>
