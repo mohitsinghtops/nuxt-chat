@@ -1,95 +1,91 @@
 <template>
     <div>
         <div class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-grayPrimary/90">
+            <!-- Modal content -->
+            <div class="relative w-full max-w-md max-h-full rounded-lg shadow bg-grayPrimary border border-gray-50/10" v-click-outside="handleCloseModal">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between px-4 py-3 border-b rounded-t border-gray-50/10">
+                    <h3 class="text-xl font-semibold text-white">{{ type == 'add' ? 'Invite User' : 'Remove Users'}}</h3>
+                    <button type="button"
+                        class="end-2.5 text-gray-400 bg-transparent rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
+                        data-modal-hide="authentication-modal"
+                        @click.prevent="handleCloseModal"
+                        >
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="p-4 md:p-5 max-h-[350px] overflow-auto">
+                    <template v-if="dataLoading">
+                        <loading-component class="h-[calc(100%-1rem)]"></loading-component>
+                    </template>
 
-            <!-- main -->
-            <div class="relative p-4 w-full max-w-md max-h-full">
-                <!-- Modal content -->
-                <div class="relative rounded-lg shadow bg-grayPrimary border border-gray-50/10">
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between px-4 py-3 border-b rounded-t border-gray-50/10">
-                        <h3 class="text-xl font-semibold text-white">{{ type == 'add' ? 'Invite User' : 'Remove Users'}}</h3>
-                        <button type="button"
-                            class="end-2.5 text-gray-400 bg-transparent rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
-                            data-modal-hide="authentication-modal"
-                            @click.prevent="handleCloseModal"
+                    <template v-else>
+                        <form class="space-y-4" v-if="type == 'add'" @submit.prevent="handleInviteUser">
+                            <div>
+                                <label for="user_email" class="block mb-2 text-sm font-medium text-white">User Email</label>
+                                <input type="email" name="user_email" id="user_email" v-model="formData.email"
+                                    class="text-gray-200 text-sm rounded-lg block w-full p-2.5 bg-grayPrimary border-gray-50/10 placeholder-gray-400"
+                                    placeholder="Email" required />
+                            </div>
+
+                            <button type="submit"
+                                class="w-auto text-white bg-blueLight hover:bg-blueDark focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                                <loading-component v-if="loading"></loading-component>
+                                <span v-else>Submit</span>
+                            </button>
+
+                            <div 
+                                class="alert bg-red-400/10 text-red-600 border border-red-600 rounded my-5 py-3 px-4 text-sm"
+                                v-if="error"
                             >
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 14 14">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                    </div>
-                    <!-- Modal body -->
-                    <div class="p-4 md:p-5 max-h-[350px] overflow-auto">
-                        <template v-if="dataLoading">
-                            <loading-component class="h-[calc(100%-1rem)]"></loading-component>
-                        </template>
+                                {{ error }}
+                            </div>
+                        </form>
 
+                        <!-- remove form -->
                         <template v-else>
-                            <form class="space-y-4" v-if="type == 'add'" @submit.prevent="handleInviteUser">
-                                <div>
-                                    <label for="user_email" class="block mb-2 text-sm font-medium text-white">User Email</label>
-                                    <input type="email" name="user_email" id="user_email" v-model="formData.email"
-                                        class="text-gray-200 text-sm rounded-lg block w-full p-2.5 bg-grayPrimary border-gray-50/10 placeholder-gray-400"
-                                        placeholder="Email" required />
-                                </div>
+                            <template v-if="selectedRoom?.users?.length > 1">
+                                <form class="space-y-4" @submit.prevent="handleRemoveUser">
+                                    <div class="flex gap-4 flex-wrap items-start mb-3">
     
-                                <button type="submit"
-                                    class="w-auto text-white bg-blueLight hover:bg-blueDark focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                                    <loading-component v-if="loading"></loading-component>
-                                    <span v-else>Submit</span>
-                                </button>
-    
-                                <div 
-                                    class="alert bg-red-400/10 text-red-600 border border-red-600 rounded my-5 py-3 px-4 text-sm"
-                                    v-if="error"
-                                >
-                                    {{ error }}
-                                </div>
-                            </form>
-    
-                            <!-- remove form -->
-                            <template v-else>
-                                <template v-if="selectedRoom?.users?.length > 1">
-                                    <form class="space-y-4" @submit.prevent="handleRemoveUser">
-                                        <div class="flex gap-4 flex-wrap items-start mb-3">
+                                        <template v-for="user in selectedRoom.users" :key="user._id">
+                                            <div class="flex items-start gap-3" v-if="currentUserId != user._id">
+                                                <input
+                                                    :id="'user_' + user._id"
+                                                    type="checkbox"
+                                                    v-model="formData.selectedUsers"
+                                                    :value="user._id"
+                                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                                />
+                                                <label :for="'user_' + user._id" class="text-sm -mt-2 font-medium text-gray-300">
+                                                    {{ user?.email }} {{ user?.username ? '(' + user?.username + ')' : '' }}
+                                                </label>
+                                            </div>
+                                        </template>
+                                    </div>
         
-                                            <template v-for="user in selectedRoom.users" :key="user._id">
-                                                <div class="flex items-start gap-3" v-if="currentUserId != user._id">
-                                                    <input
-                                                        :id="'user_' + user._id"
-                                                        type="checkbox"
-                                                        v-model="formData.selectedUsers"
-                                                        :value="user._id"
-                                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                                    />
-                                                    <label :for="'user_' + user._id" class="text-sm -mt-2 font-medium text-gray-300">
-                                                        {{ user?.email }} {{ user?.username ? '(' + user?.username + ')' : '' }}
-                                                    </label>
-                                                </div>
-                                            </template>
-                                        </div>
-            
-                                        <button type="submit"
-                                            class="w-auto text-white bg-blueLight hover:bg-blueDark focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                                            <loading-component v-if="loading"></loading-component>
-                                            <span v-else>Submit</span>
-                                        </button>
-                                    </form>
-                                </template>
+                                    <button type="submit"
+                                        class="w-auto text-white bg-blueLight hover:bg-blueDark focus:ring-0 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                                        <loading-component v-if="loading"></loading-component>
+                                        <span v-else>Submit</span>
+                                    </button>
+                                </form>
+                            </template>
 
-                                <div 
-                                    class="alert bg-blue-400/10 text-blue-600 border border-blue-600 rounded py-3 px-4 text-sm"
-                                    v-else
-                                >
-                                    No users found to remove
-                                </div>
-                             </template>
-                        </template>
-                    </div>
+                            <div 
+                                class="alert bg-blue-400/10 text-blue-600 border border-blue-600 rounded py-3 px-4 text-sm"
+                                v-else
+                            >
+                                No users found to remove
+                            </div>
+                         </template>
+                    </template>
                 </div>
             </div>
         </div>
