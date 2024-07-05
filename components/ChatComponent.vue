@@ -31,13 +31,12 @@
 
         <create-room-modal v-if="modalType == 'room'" @create-room="handleRoomCreate" :total-rooms="rooms.length" />
 
-        <room-detail-modal v-if="showRoomModal" :room-id="selectedRoomId" :is-show-modal="showRoomModal"
-            @handleRoomDetail="handleRoomDetail"></room-detail-modal>
+        <room-detail-modal v-if="showRoomModal" :room-id="selectedRoomId" @handleRoomDetail="handleRoomDetail"></room-detail-modal>
 
         <add-remove-room-user v-if="showAddUserModal" :type="addRemoveType" :room-id="selectedRoomId"
             @add-room-user="handleAddRemoveUser"></add-remove-room-user>
 
-        <profile-detail-modal v-if="showProfileModal" :is-show-modal="showProfileModal" :type="profileModalType"
+        <profile-detail-modal v-if="showProfileModal" :type="profileModalType"
             @handleProfileDetail="handleProfileDetail"></profile-detail-modal>
 
         <invite-modal v-if="showInviteModal" :all-invite-list="allInviteItems" @handleInvites="handleInvites"></invite-modal>

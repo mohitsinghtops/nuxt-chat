@@ -1,4 +1,4 @@
-import { addData, getAllData, getDataByField, updateCollectionData, deleteCollectionData, getDataById, getAllDataByField, getDataByQuery } from '@/database/firebaseService';
+import { addData, getAllData, updateCollectionData, deleteCollectionData, getDataById, getAllDataByField, getDataByQuery } from '@/database/firebaseService';
 
 import { db } from '~/database'
 
@@ -16,6 +16,7 @@ import {
     orderBy,
     onSnapshot,
 } from 'firebase/firestore'
+
 
 const collectionName = 'invites'
 
@@ -57,3 +58,34 @@ export const updateInvite = async (id, item) => {
 export const deleteInvite = async (id) => {
     return await deleteCollectionData(id, collectionName)
 }
+
+// export const handleUserInvite = async (options) => {
+
+//     const mailOptions = {
+//         from: 'Chat App<noreply@chat-app-e5772.firebaseapp.com>',
+//         to: 'test@example.com',
+//         subject: 'Invite User',
+//     }
+    
+//     const text1 = `
+//         Hello,
+    
+//         You are invited to join our room in our Chat App.
+//     `
+    
+//     const text2 = `
+//         If you didn't want to join the room, you can ignore this email.
+    
+        
+//         Thanks,
+//         Chat App team
+//     `
+
+//     const url = ` 
+//     ${process.env.FRONTEND_URL}/sign-up`
+
+//     mailOptions.to = options.userEmail
+//     mailOptions.text = text1 + url + text2
+
+//     return await transport.sendMail(mailOptions);
+// }

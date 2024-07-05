@@ -1,6 +1,6 @@
 <template>
     <div class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 z-50 w-full h-full rounded-lg max-w-sm min-w-sm shadow bg-grayPrimary border border-gray-50/10 min-h-screen max-h-screen p-6"
-        v-if="showModal" v-click-outside="handleCloseModal">
+        v-click-outside="handleCloseModal">
         <loading-component v-if="dataLoading" class="h-[calc(100%-1rem)]"></loading-component>
         <template v-else>
             <div class="header flex justify-between">
@@ -92,15 +92,12 @@
 
 import { uploadUserProfile } from "~/database/storageService";
 import { updateUserProfile, changePassword } from "~/services/authService";
+import { getUserMessages, updateMessage } from "~/services/messageService";
 import { getUserByField, updateUser } from "~/services/userService";
 import { useUserStore } from "~/store/user";
 
 
 const props = defineProps({
-    isShowModal: {
-        type: Boolean,
-        default: false
-    },
     type: {
         type: String,
         default: 'profile'
@@ -109,7 +106,6 @@ const props = defineProps({
 
 const emit = defineEmits(['handle-profile-detail'])
 
-const showModal = ref(false);
 const formData = ref({
     name: '',
     avatar: '',
@@ -129,23 +125,11 @@ onMounted(() => {
     getUserDetail();
 })
 
-watch(
-    () => props.isShowModal,
-    (value) => {
-        if (value) {
-            showModal.value = true;
-        } else {
-            showModal.value = false;
-        }
-    },
-    { deep: true, immediate: true }
-)
-
 const getUserDetail = async () => {
     dataLoading.value = true;
     setTimeout(() => {
         const user = userStore.getUserData
-        formData.value.name = user?.displayName ?? ''
+        formData.value.name = user?.displayName ?? user?.email.split('@')[0];
         formData.value.email = user?.email ?? ''
         formData.value.avatar = user?.photoURL ?? ''
         dataLoading.value = false;
@@ -154,20 +138,18 @@ const getUserDetail = async () => {
 
 const handleCloseModal = () => {
     emit('handle-profile-detail', false)
-    showModal.value = false;
 }
 
 const updateProfileDetails = async () => {
     loading.value = true;
 
-    let url = formData.value.avatar
     if (selectedFile.value) {
-        url = await uploadUserProfile(currentUserId.value, selectedFile.value)
+        formData.value.avatar = await uploadUserProfile(currentUserId.value, selectedFile.value)
     }
 
     const userData = {
-        displayName: formData.value.name,
-        photoURL: url
+        displayName     : formData.value.name,
+        photoURL        : formData.value.avatar
     }
 
     const user = await getUserByField('email', formData.value.email);
@@ -175,14 +157,14 @@ const updateProfileDetails = async () => {
     await updateUserProfile(userData)
     .then(async(res) => {
         await updateUser(user.id, userData)
+        updateUserMessages();
         useToast('success', 'User details updated successfully')
     }).catch((err) => {
-        console.log(err)
         useToast('error', 'Error on updating user details')
     }).finally(() => {
-        formData.value.avatar = url
         selectedFile.value = null;
-        loading.value = false;
+        loading.value = false
+        handleCloseModal();
     })
 
 }
@@ -219,6 +201,22 @@ const changeUserPassword = async () => {
         .finally(() => {
             loading.value = false;
         })
+}
+
+const updateUserMessages = async () => {
+    if(selectedFile.value) {
+        const userMessages = await getUserMessages(currentUserId.value);
+
+        userMessages.forEach((message) => {
+            let data = {
+                avatar: formData.value.avatar
+            }
+            updateMessage(message.id, data);
+        })
+        return true;
+    }
+
+    return true;
 }
 
 </script>

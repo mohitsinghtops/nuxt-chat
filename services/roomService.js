@@ -13,7 +13,8 @@ export const getRooms = async () => {
 }
 
 export const getRoomWithRoomId = async (roomId) => {
-    return await getDataByField('roomId', roomId, collectionName)
+    const rooms =  await getDataByField('roomId', roomId, collectionName)
+    return rooms?.length ? rooms[0] : null
 }
 
 export const getUserRooms = async (key = 'id', userId) => {

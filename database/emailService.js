@@ -1,7 +1,7 @@
 import * as nodemailer from 'nodemailer';
 
 // Create a transporter object
-const transport = nodemailer.createTransport({
+var transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     auth: {

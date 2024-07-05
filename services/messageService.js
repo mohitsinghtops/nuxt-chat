@@ -16,7 +16,8 @@ export const getAllMessages = async () => {
 }
 
 export const getMessage = async (field, value) => {
-  return await getDataByField(field, value, collectionName);
+  const messages = await getDataByField(field, value, collectionName);
+  return messages?.length ? messages[0] : null
 }
 
 export const getMessageById = async (id) => {
@@ -24,7 +25,11 @@ export const getMessageById = async (id) => {
 }
 
 export const getRoomMessages = async (roomId) => {
-  return await getAllDataByField('roomId', roomId, collectionName, )
+  return await getAllDataByField('roomId', roomId, collectionName)
+}
+
+export const getUserMessages = async (senderId) => {
+  return await getAllDataByField('senderId', senderId, collectionName)
 }
 
 export const updateMessage = async (id, item) => {
@@ -36,8 +41,9 @@ export const deleteMessage = async (id) => {
 }
 
 export const updateLastRoomMessage = async(message) => {
-  const room = await getDataByField('roomId', message.roomId, roomCollectionName);
-  
+  const rooms = await getDataByField('roomId', message.roomId, roomCollectionName);
+  const room = rooms?.length ? rooms[0] : {}
+
   room.lastMessage = {
     _id: message._id,
     content: message.content,

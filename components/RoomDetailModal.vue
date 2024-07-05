@@ -1,5 +1,5 @@
 <template>
-    <div class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 z-50 w-full h-full rounded-lg max-w-sm min-w-sm shadow bg-grayPrimary border border-gray-50/10 min-h-screen max-h-screen p-6" v-if="showModal" v-click-outside="handleCloseModal">
+    <div class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 z-50 w-full h-full rounded-lg max-w-sm min-w-sm shadow bg-grayPrimary border border-gray-50/10 min-h-screen max-h-screen p-6" v-click-outside="handleCloseModal">
         <loading-component v-if="dataLoading" class="h-[calc(100%-1rem)]"></loading-component>
         <template v-else>
             <div class="header flex justify-between">
@@ -57,19 +57,14 @@
     import { updateRoom, getRoomWithRoomId } from "~/services/roomService";
 
     const props = defineProps({
-        isShowModal: {
-            type: Boolean,
-            default: false
-        },
         roomId: {
-            type: Number,
+            type: String,
             default: ""
         }
     })
 
     const emit = defineEmits(['handle-room-detail'])
 
-    const showModal = ref(false);
     const formData = ref(false);
     const dataLoading = ref(false);
     const loading = ref(false);
@@ -81,18 +76,6 @@
         currentUserId.value = localStorage.getItem('userId');
         getRoomDetail();
     })
-
-    watch(
-        () => props.isShowModal,
-        (value) => {
-            if (value) {
-                showModal.value = true;
-            } else {
-                showModal.value = false;
-            }
-        },
-        {deep: true, immediate: true}
-    )
 
     const isRoomAdmin = computed(() => {
         const user = formData.value.users.find((user) => user._id == currentUserId.value)
@@ -108,7 +91,6 @@
 
     const handleCloseModal = () => {
         emit('handle-room-detail', false)
-        showModal.value = false;
     }
 
     const updateRoomDetails = async() => {

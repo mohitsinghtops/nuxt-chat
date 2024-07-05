@@ -47,7 +47,7 @@ export const getDataByField = async (field, value, collectionName, order = 'asc'
     querySnapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() })
     })
-    return items?.length ? items[0] : null
+    return items 
 }
 
 export const getAllDataByField = async (field, value, collectionName, order = 'asc') => {

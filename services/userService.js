@@ -16,7 +16,8 @@ export const getUsers = async () => {
 
 // New function to get item by a specific field
 export const getUserByField = async (field, value) => {
-    return await getDataByField(field, value, collectionName)
+    const users = await getDataByField(field, value, collectionName)
+    return users?.length ? users[0] : null
 }
 
 export const updateUser = async (id, item) => {

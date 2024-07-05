@@ -1,5 +1,4 @@
 import transport from '~/services/emailService'
-import { addInvite } from '~/services/inviteService'
 
 // Configure the mailoptions object
 const mailOptions = {

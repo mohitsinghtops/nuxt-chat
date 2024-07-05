@@ -24,9 +24,9 @@
                     </div>
                     <!-- Modal body -->
                     <div class="p-4 md:p-5 max-h-[350px] overflow-auto">
-                        <templaye v-if="dataLoading">
+                        <template v-if="dataLoading">
                             <loading-component class="h-[calc(100%-1rem)]"></loading-component>
-                        </templaye>
+                        </template>
 
                         <template v-else>
                             <form class="space-y-4" v-if="type == 'add'" @submit.prevent="handleInviteUser">
@@ -105,7 +105,7 @@
 
     const props = defineProps({
         roomId: {
-            type: Number,
+            type: String,
             default: ""       
         },
         type: {
@@ -173,12 +173,14 @@
             status: 0, // 0: not accepted, 1: accepted
         }
 
+        // add invite to collections 
         await addInvite(data);
 
         await useFetch('/api/invite', {
             method: 'post',
             body: data
-        }).then((res) => {
+        })
+        .then((res) => {
             if(res.status.value == 'success') {
                 formData.email = '';
                 useToast('success', 'User invited successfully')
