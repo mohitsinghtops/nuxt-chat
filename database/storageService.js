@@ -96,7 +96,6 @@ export const uploadRoomFile = async(currentUserId, roomId, file) => {
 	} else {
 		return null;
 	}
-
 }
 
 export const uploadUserProfile = async(currentUserId, file) => {
@@ -110,5 +109,17 @@ export const uploadUserProfile = async(currentUserId, file) => {
 	} else {
 		return null;
 	}
+}
 
+export const uploadMessageFile = async(currentUserId, roomId, file) => {
+	const storageRef = fileRef(currentUserId, roomId, file.name);
+	
+	// 'file' comes from the Blob or File API
+	const result = await uploadBytes(storageRef, file)
+
+	if(result){
+		return await getFileDownloadUrl(result.ref);
+	} else {
+		return null;
+	}
 }

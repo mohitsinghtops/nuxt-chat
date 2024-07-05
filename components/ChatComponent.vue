@@ -318,16 +318,24 @@ const sendMessage = async ({
         }
     }
 
-    const { id } = await addMessage(finalMessageObj);
-    finalMessageObj.id = id;
-    // messages.value = [...messages.value, finalMessageObj];
-
     if (files) {
+        const finalFiles = formattedFiles(files);
+        finalMessageObj.files = finalFiles;
+        messages.value = [...messages.value, finalMessageObj];
         for (let index = 0; index < files.length; index++) {
-            await uploadFile({ file: files[index], messageId: id, roomId });
+            const url = await uploadFile({ file: files[index], messageId: roomId, index });
+            finalFiles[index].url = url;
+            finalFiles[index].preview = url;
         }
+        await addMessage(finalMessageObj);
+        await updateLastRoomMessage(finalMessageObj);
     }
-    await updateLastRoomMessage(finalMessageObj);
+    else
+    {
+        await addMessage(finalMessageObj);
+        await updateLastRoomMessage(finalMessageObj);
+    }
+    
     // fetchAllRooms();
 };
 
@@ -345,7 +353,7 @@ const editMessage = async ({ roomId, messageId, newContent, files, replyMessage,
 
     if (files) {
         for (let index = 0; index < files.length; index++) {
-            await uploadFile({ file: files[index], messageId: message.id, roomId });
+            await uploadFile({ file: files[index], messageId: message.id, index });
         }
     }
 }
@@ -377,7 +385,7 @@ const deleteMessage = async ({ roomId, message }) => {
         })
 }
 
-const uploadFile = async ({ file, messageId, roomId }) => {
+const uploadFile = async ({ file, messageId, index }) => {
     return new Promise((resolve) => {
         let type = file.extension || file.type;
         if (type === "svg" || type === "pdf") {
@@ -396,17 +404,17 @@ const uploadFile = async ({ file, messageId, roomId }) => {
                 resolve(false);
             },
             async (url) => {
-                const message = messages.value.find((message) => message.id === messageId);
-                message.files.forEach((f) => {
-                    if (f.url == file.localUrl) {
-                        f.url = url;
-                        f.preview = url;
-                    }
-                });
+                // const message = messages.value.find((message) => message.id === messageId);
+                // message.files[index].url = url;
+                // message.files[index].preview = url;
+                
+                // const data = {
+                //     files: message.files
+                // }
 
-                await updateMessage(messageId, message);
-                await updateLastRoomMessage(message);
-                resolve(true);
+                // await updateMessage(messageId, data);
+                // await updateLastRoomMessage(message);
+                resolve(url);
             }
         );
     });

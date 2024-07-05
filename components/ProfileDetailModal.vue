@@ -208,10 +208,12 @@ const updateUserMessages = async () => {
         const userMessages = await getUserMessages(currentUserId.value);
 
         userMessages.forEach((message) => {
-            let data = {
-                avatar: formData.value.avatar
+            if(message.avatar != formData.value.avatar) {
+                let data = {
+                    avatar: formData.value.avatar
+                }
+                updateMessage(message.id, data);
             }
-            updateMessage(message.id, data);
         })
         return true;
     }
