@@ -6,9 +6,7 @@
 
 <script setup>
 import { useUserStore } from "~/store/user";
-import { getUserByField } from '~/services/userService.js'
 import { auth } from "~/database";
-import { getCurrentUser } from "~/services/authService";
 import { onAuthStateChanged } from "firebase/auth";
 
 const userStore = useUserStore();
@@ -27,8 +25,6 @@ const getUserDetails = async () => {
             userStore.setUserData(user);
         }
     });
-    // const email = useCookie('email')
-    // const user = await getUserByField('email', email.value);
    
 };
 </script>

@@ -49,7 +49,7 @@
 
 <script setup>
 import { addRoom } from '~/services/roomService.js'
-import { generateRandomId, generateRandomDigit } from '~/helpers/common.js'
+import { generateRandomDigit } from '~/helpers/common.js'
 import { useUserStore } from "~/store/user";
 
 const userStore = useUserStore();

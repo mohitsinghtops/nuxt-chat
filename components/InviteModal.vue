@@ -54,9 +54,9 @@
 </template>
 
 <script setup>
-import { updateInvite } from '~/services/inviteService';
-import { getRoomById, updateRoom } from '~/services/roomService';
-import { useUserStore } from '~/store/user';
+    import { updateInvite } from '~/services/inviteService';
+    import { getRoomById, updateRoom } from '~/services/roomService';
+    import { useUserStore } from '~/store/user';
 
 
     const props = defineProps({

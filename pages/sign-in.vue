@@ -47,10 +47,8 @@
 
 <script lang="js" setup>
 import { signInUser } from '~/services/authService';
-import { getUserByField } from '~/services/userService.js'
 import { useUserStore } from "~/store/user";
 import { useRoute } from 'vue-router'
-import { getRoomById, updateRoom } from '~/services/roomService';
 
 definePageMeta({
     middleware: ['guest']

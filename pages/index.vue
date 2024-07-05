@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <chat-component />
-  </div>
+    <div>
+        <chat-component />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -10,7 +10,7 @@ definePageMeta({
     middleware: ['auth'],
 });
 useHead({
-  title: "Chat App",
+    title: "Chat App",
 });
 </script>
 

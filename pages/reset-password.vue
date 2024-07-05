@@ -46,7 +46,6 @@
 
 <script lang="js" setup>
 import { resetPassword } from '~/services/authService';
-import { useUserStore } from "~/store/user";
 import { useRoute } from 'vue-router';
 
 definePageMeta({
@@ -64,7 +63,6 @@ const formData = reactive({
 const route = useRoute();
 const error = ref(null);
 const loading = ref(false);
-const userStore = useUserStore();
 
 const handleSubmit = async () => {
     loading.value = true;

@@ -1,7 +1,6 @@
 import {addData, getAllData, getDataByField, getAllDataByField, updateCollectionData, deleteCollectionData, getDataById} from '@/database/firebaseService';
 import  {updateRoom} from '@/services/roomService';
-import { collection,  query,  orderBy, arrayRemove, arrayUnion } from 'firebase/firestore'
-import { db } from '~/database'
+import { arrayRemove, arrayUnion } from 'firebase/firestore'
 
 const collectionName = 'messages'
 const roomCollectionName = 'rooms'

@@ -59,7 +59,7 @@
 import { generateRandomDigit } from '~/helpers/common.js'
 import { signUpUser } from '~/services/authService';
 import { addRoom } from '~/services/roomService';
-import { addUser, getUsers, getUserByField } from '~/services/userService.js'
+import { addUser } from '~/services/userService.js'
 import { useRoute } from 'vue-router'
 
 definePageMeta({

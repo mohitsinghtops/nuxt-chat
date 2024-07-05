@@ -1,8 +1,4 @@
 import { addData, getAllData, getDataByField, updateCollectionData, deleteCollectionData, getDataById } from '@/database/firebaseService';
-import { collection, query, orderBy } from 'firebase/firestore'
-import { db } from '~/database'
-import { generateRandomDigit } from '~/helpers/common';
-import { addRoom } from './roomService';
 
 const collectionName = 'users'
 

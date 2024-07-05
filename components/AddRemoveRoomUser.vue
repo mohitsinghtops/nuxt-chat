@@ -93,11 +93,9 @@
 </template>
 
 <script setup>
-    import { getUserByField, getUsers, addUser } from "~/services/userService.js";
     import { getRoomWithRoomId, updateRoom } from "~/services/roomService.js";
     import { addInvite, getInviteByRoomAndEmail } from "~/services/inviteService";
     import { useUserStore } from "~/store/user";
-    // import { inviteUser } from "~/services/emailService";
 
     const props = defineProps({
         roomId: {
@@ -195,7 +193,6 @@
 
     const handleRemoveUser = async() => {
         if(formData.selectedUsers.length) {
-
             loading.value = true
             useConfirmationToast('warning', 'Do you want to remove the selected users?')
             .then(async(result) => {

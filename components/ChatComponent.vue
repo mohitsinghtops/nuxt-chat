@@ -45,12 +45,7 @@
 
 <script setup>
 import { register } from "vue-advanced-chat";
-import {
-    getRooms,
-    getUserRooms,
-    deleteRoom,
-    deleteRoomWithAllMessages,
-} from "~/services/roomService.js";
+import { deleteRoomWithAllMessages } from "~/services/roomService.js";
 import { listenUploadImageProgress, deleteFile } from "~/database/storageService";
 import {
     addMessage,
@@ -58,15 +53,13 @@ import {
     updateMessage,
     updateLastRoomMessage,
     getMessage,
-    getMessageById,
     updateMessageReactions
 } from "~/services/messageService.js";
-import { generateRandomId, generateRandomDigit, formattedFiles } from "~/helpers/common.js";
+import { formattedFiles } from "~/helpers/common.js";
 import { useUserStore } from "~/store/user";
 
 import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore'
 import { db } from '~/database'
-import { getUsersPendingInvites } from "~/services/inviteService";
 
 register();
 
@@ -74,8 +67,6 @@ const userStore = useUserStore();
 const modalType = ref("");
 const chatRef = ref(null);
 const showRoomModal = ref(false);
-const showRoomInfo = ref(false);
-const roomDetails = ref({});
 const addRemoveType = ref("")
 const profileModalType = ref("profile")
 const roomsLoaded = ref(false);
