@@ -7,7 +7,7 @@
                 <p class="text-gray-300 text-lg mb-10">The page you are looking doesn't exist or has been removed.</p>
             </template>
             <template v-else>
-                <h5 class="text-[80px] font-bold mb-0 capitalize text-stroke">Internal server down</h5>
+                <h5 class="text-[80px] font-bold mb-0 capitalize text-stroke">Internal server error</h5>
                 <p class="text-gray-300 text-lg mb-10">Some error occurred in our application. Please contact to administrator.</p>
             </template>
             <nuxt-link to="/"
