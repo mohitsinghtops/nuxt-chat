@@ -1,7 +1,8 @@
 <template>
-  <div>
-    <slot />
-  </div>
+    <div>
+        <slot />
+        <particle-component></particle-component>
+    </div>
 </template>
 
 <script setup>

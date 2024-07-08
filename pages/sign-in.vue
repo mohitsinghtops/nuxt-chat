@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="min-h-screen flex justify-center items-center">
-            <form @submit.prevent="handleSubmit" class="min-w-[450px] mx-auto border border-gray-50/10 rounded-lg p-8">
+            <form @submit.prevent="handleSubmit" class="min-w-[450px] bg-white/10 mx-auto border border-white/30 backdrop-blur-2xl rounded-lg p-8">
                 <h1 class="text-center mb-12 text-white text-3xl font-bold">
                     Start Chat
                 </h1>
